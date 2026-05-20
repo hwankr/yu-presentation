@@ -342,6 +342,9 @@ window.AiceSlide4 = (function () {
     var panelL = document.querySelector('#slide-4 .panel-left');
     var panelR = document.querySelector('#slide-4 .panel-right');
     var profile = document.querySelector('#slide-4 .building-profile');
+    var calloutDot = document.querySelector('#slide-4 .callout-dot');
+    var calloutLine = document.querySelector('#slide-4 .callout-line');
+    var calloutLabel = document.querySelector('#slide-4 .callout-label');
     var panelItems = document.querySelectorAll(
       '#slide-4 .panel-tag, #slide-4 .stat, #slide-4 .spark, #slide-4 .load-row, #slide-4 .gauge');
     var loadBars = document.querySelectorAll('#slide-4 .load-track i');
@@ -408,6 +411,9 @@ window.AiceSlide4 = (function () {
     gsap.set(panelL, { opacity: 0, x: -28 });
     gsap.set(panelR, { opacity: 0, x: 28 });
     gsap.set(profile, { opacity: 0, y: 20 });
+    gsap.set(calloutDot, { scale: 0, opacity: 0, transformOrigin: '50% 50%' });
+    gsap.set(calloutLine, { scaleX: 0, transformOrigin: '100% 50%' });
+    gsap.set(calloutLabel, { opacity: 0, x: 12 });
     gsap.set(panelItems, { opacity: 0, y: 9 });
     gsap.set(loadBars, { scaleX: 0, transformOrigin: '0% 50%' });
     gsap.set(chB, { opacity: 1, y: 0 });
@@ -449,6 +455,11 @@ window.AiceSlide4 = (function () {
     if (gaugeFill) tlIntro.to(gaugeFill, { strokeDashoffset: glen * (1 - gPct), duration: 1.2, ease: 'power2.out' }, 1.6);
     addCount(tlIntro, gaugeNum, 1.6);
     tlIntro.call(startAmbient, null, 2.0);
+
+    /* 콜아웃 — 빌딩에서 노드·리더 선이 끌어나오고 라벨이 뜬다 */
+    tlIntro.to(calloutDot, { scale: 1, opacity: 1, duration: 0.45, ease: 'power3.out' }, 2.55);
+    tlIntro.to(calloutLine, { scaleX: 1, duration: 0.55, ease: 'power2.out' }, 2.7);
+    tlIntro.to(calloutLabel, { opacity: 1, x: 0, duration: 0.55, ease: 'power3.out' }, 3.0);
 
     /* ----- 2막 — 부감 줌아웃 → 캠퍼스 C-EMS ----- */
     tlReveal = gsap.timeline({
