@@ -11,6 +11,7 @@
     AiceSlide2.init();
     AiceSlide3.init();
     AiceSlide4.init();
+    AiceSlide5.init();
   });
 
   /* ----- 슬라이드 목록 · 현재 위치 ----- */
@@ -60,6 +61,7 @@
       else if (id === 'slide-2') AiceSlide2.replay();
       else if (id === 'slide-3') AiceSlide3.replay();
       else if (id === 'slide-4') AiceSlide4.replay();
+      else if (id === 'slide-5') AiceSlide5.replay();
     }
   });
 })();

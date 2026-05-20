@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="css/slide-2.css">
   <link rel="stylesheet" href="css/slide-3.css">
   <link rel="stylesheet" href="css/slide-4.css">
+  <link rel="stylesheet" href="css/slide-5.css">
 </head>
 <body>
   <main id="deck">
@@ -207,6 +208,78 @@
       </div>
     </section>
 
+    <!-- ============ 슬라이드 5 — 예측 엔진 (머신러닝 작동 원리) ============ -->
+    <section class="slide" id="slide-5">
+      <div class="bg">
+        <div class="bg-spot"></div>
+        <div class="particles" id="s5-particles"></div>
+        <div class="bg-vignette"></div>
+      </div>
+
+      <div class="stage">
+        <div class="eyebrow" id="s5-eyebrow">예측 엔진</div>
+
+        <!-- 수렴 파이프라인 — 입력 변수·가중치 → 예측 모델 → 사용량 카운트업 -->
+        <div class="pipeline" id="s5-pipeline">
+
+          <!-- 좌 — 입력 변수 + 적용 가중치 -->
+          <div class="inputs">
+            <div class="vgroup" id="s5-weather">
+              <span class="vgroup-label">기상 데이터</span>
+              <div class="chips">
+                <div class="vrow"><span class="chip">기온</span><span class="wt"></span></div>
+                <div class="vrow"><span class="chip">습도</span><span class="wt"></span></div>
+                <div class="vrow"><span class="chip">일사량</span><span class="wt"></span></div>
+              </div>
+            </div>
+            <div class="vgroup" id="s5-campus">
+              <span class="vgroup-label">캠퍼스 특성 데이터</span>
+              <div class="chips">
+                <div class="vrow"><span class="chip">건물 용도</span><span class="wt"></span></div>
+                <div class="vrow"><span class="chip">시험기간</span><span class="wt"></span></div>
+                <div class="vrow"><span class="chip">축제</span><span class="wt"></span></div>
+                <div class="vrow"><span class="chip">과거 전력 패턴</span><span class="wt"></span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 연결선 — JS가 가중치·모델 좌표로 path 생성 -->
+          <svg class="wires" id="s5-wires" aria-hidden="true"></svg>
+
+          <!-- 중앙 — 예측 모델 (가중치 행렬 학습) -->
+          <div class="ml" id="s5-ml">
+            <div class="model" id="s5-model">
+              <span class="model-tag">예측 모델</span>
+              <div class="matrix" id="s5-matrix"></div>
+              <div class="progress">
+                <span class="prog-label">모델 학습</span>
+                <span class="prog-track"><i class="prog-fill" id="s5-prog-fill"></i></span>
+                <span class="prog-num" id="s5-prog-num">0%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 우 — 예측 전력 사용량 (카운트업) -->
+          <div class="output" id="s5-output">
+            <span class="out-label">예측 전력 사용량</span>
+            <div class="out-readout" id="s5-readout">
+              <strong class="out-num" id="s5-out-num">0.0</strong>
+              <span class="out-unit">kW</span>
+            </div>
+            <svg class="forecast" viewBox="0 0 260 80" preserveAspectRatio="none" aria-hidden="true">
+              <path class="fc-band"></path>
+              <path class="fc-line"></path>
+              <circle class="fc-dot" r="3"></circle>
+            </svg>
+            <span class="out-cap">적정 범위 내 예측</span>
+          </div>
+
+        </div>
+
+        <div class="kicker" id="s5-kicker">맥락을 읽는 <em class="kw">예측</em></div>
+      </div>
+    </section>
+
   </main>
 
   <!-- 라이브러리 · 스크립트 (로컬 · 오프라인) -->
@@ -215,6 +288,7 @@
   <script src="js/slide-2.js"></script>
   <script src="js/slide-3.js"></script>
   <script src="js/slide-4.js"></script>
+  <script src="js/slide-5.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
