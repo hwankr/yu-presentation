@@ -114,17 +114,85 @@
       </div>
 
       <div class="stage">
-        <!-- 3D 씬 — 와이어프레임 건물은 JS가 생성 -->
+        <!-- 3D 씬 — 바닥·건물·네트워크는 JS가 생성 (정사영 아이소메트릭) -->
+        <!-- .tilt = 회전 고정 래퍼(rotateX→rotateY 순서 보존 → 수직 모서리 유지) -->
+        <!-- .world = GSAP이 스케일·이동만 담당 (회전 안 함 → 절대 안 기울어짐) -->
         <div class="scene">
-          <div class="world" id="s4-world"></div>
+          <div class="world" id="s4-world">
+            <div class="tilt" id="s4-tilt"></div>
+          </div>
         </div>
 
-        <!-- HUD 텍스트 (3D 위 2D 레이어) -->
+        <!-- HUD (3D 위 2D 레이어) -->
         <div class="hud">
           <div class="ems" id="s4-ems" aria-label="C-EMS">
             <span class="ems-pre"><span class="ch ch-c">C</span><span class="ch ch-b">B</span></span><span class="ems-rest">-EMS</span>
           </div>
-          <div class="cems-sub">캠퍼스 에너지 관리 시스템</div>
+          <div class="bems-kicker" id="s4-bems-kicker">Building Energy Management System</div>
+          <div class="cems-sub" id="s4-cems-sub">캠퍼스 에너지 관리 시스템</div>
+          <div class="cems-stats" id="s4-cems-stats">
+            <span class="cs"><b>28</b>개 동</span>
+            <span class="cs-dot"></span>
+            <span class="cs"><b>4.2</b> MWh<small>/일</small></span>
+            <span class="cs-dot"></span>
+            <span class="cs cs-live"><i></i>실시간</span>
+          </div>
+
+          <!-- 1막 — 단일 건물 관제 콘솔 -->
+          <div class="building-hud" id="s4-building-hud">
+
+            <!-- 좌측 패널 — 실시간 부하 -->
+            <div class="panel panel-left">
+              <span class="panel-tag">REAL-TIME LOAD</span>
+              <div class="stat stat-hero">
+                <span class="stat-label">현재 전력</span>
+                <strong class="stat-val" data-count="128.4" data-suffix=" kW">0.0 kW</strong>
+              </div>
+              <div class="stat">
+                <span class="stat-label">오늘 사용량</span>
+                <strong class="stat-val" data-count="1842" data-int="1" data-suffix=" kWh">0 kWh</strong>
+              </div>
+              <div class="spark">
+                <div class="spark-head">
+                  <span class="spark-label">오늘 부하 곡선</span>
+                  <span class="spark-peak-label">피크 14:30</span>
+                </div>
+                <svg class="spark-svg" viewBox="0 0 240 66" preserveAspectRatio="none" aria-hidden="true">
+                  <path class="spark-area"></path>
+                  <path class="spark-line"></path>
+                  <circle class="spark-dot" r="3.2"></circle>
+                </svg>
+              </div>
+            </div>
+
+            <!-- 우측 패널 — 층별 부하 + 효율 -->
+            <div class="panel panel-right">
+              <span class="panel-tag">FLOOR LOAD</span>
+              <div class="load">
+                <div class="load-row"><span class="load-fl">8F</span><span class="load-track"><i style="--w: 72%"></i></span><span class="load-kw">42<small>kW</small></span></div>
+                <div class="load-row"><span class="load-fl">6F</span><span class="load-track"><i style="--w: 44%"></i></span><span class="load-kw">26<small>kW</small></span></div>
+                <div class="load-row"><span class="load-fl">3F</span><span class="load-track"><i style="--w: 61%"></i></span><span class="load-kw">35<small>kW</small></span></div>
+                <div class="load-row"><span class="load-fl">B1</span><span class="load-track"><i style="--w: 28%"></i></span><span class="load-kw">17<small>kW</small></span></div>
+              </div>
+              <div class="gauge">
+                <svg class="gauge-svg" viewBox="0 0 132 78" aria-hidden="true">
+                  <path class="gauge-track" d="M16,68 A50,50 0 0 1 116,68"></path>
+                  <path class="gauge-fill" d="M16,68 A50,50 0 0 1 116,68"></path>
+                </svg>
+                <div class="gauge-read">
+                  <strong class="gauge-num" data-count="87" data-int="1">0</strong><span class="gauge-unit">%</span>
+                </div>
+                <span class="gauge-cap">에너지 효율</span>
+              </div>
+            </div>
+
+            <!-- 하단 — 건물 프로필 -->
+            <div class="building-profile">
+              <span class="eyebrow">MONITORED BUILDING</span>
+              <strong>건물 A-01</strong>
+              <span class="profile-sub">단일 건물 전력 가계부</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>

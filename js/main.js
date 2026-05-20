@@ -47,11 +47,11 @@
   window.addEventListener('keydown', function (e) {
     if (!e.key) return;
     var k = e.key;
-    if (k === 'ArrowDown' || k === 'PageDown' || k === ' ') {
+    if (k === 'ArrowDown' || k === 'ArrowRight' || k === 'PageDown' || k === ' ') {
       e.preventDefault();
       if (advanceCurrent()) return;   // 내부 단계가 있으면 슬라이드 이동 보류
       go(1);
-    } else if (k === 'ArrowUp' || k === 'PageUp') {
+    } else if (k === 'ArrowUp' || k === 'ArrowLeft' || k === 'PageUp') {
       e.preventDefault(); go(-1);
     } else if (k.toLowerCase() === 'r') {
       // R: 현재 슬라이드 인트로 다시 재생
