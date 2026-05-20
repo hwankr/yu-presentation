@@ -1,0 +1,120 @@
+/* ============================================================
+   slide-4.css — 슬라이드 4 (솔루션 · B-EMS → C-EMS)
+   CSS 3D 와이어프레임 건물 1채 → 부감 줌아웃 → 캠퍼스 군집
+   ============================================================ */
+
+#slide-4 { background: var(--bg); }
+
+/* ----- 배경 (슬라이드 1·2·3 톤 재사용) ----- */
+#slide-4 .bg { position: absolute; inset: 0; z-index: 0; }
+
+#slide-4 .bg-spot {
+  position: absolute; left: 50%; top: 48%;
+  width: 1200px; height: 1200px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 64%);
+}
+
+#slide-4 .bg-vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 48%, transparent 30%, rgba(0,0,0,0.62) 100%);
+}
+
+#slide-4 .particles { position: absolute; inset: 0; }
+#slide-4 .particle {
+  position: absolute; width: 3px; height: 3px;
+  border-radius: 50%; background: #fff;
+}
+
+/* ----- 무대 ----- */
+#slide-4 .stage { position: relative; z-index: 2; height: 100%; }
+
+/* ----- 3D 씬 — 부감 카메라 ----- */
+#slide-4 .scene {
+  position: absolute; inset: 0;
+  perspective: 1500px;
+  perspective-origin: 50% 42%;
+}
+#slide-4 .world {
+  position: absolute; left: 50%; top: 58%;
+  width: 0; height: 0;
+  transform-style: preserve-3d;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+/* ----- 와이어프레임 건물 (CSS 3D 직육면체) ----- */
+#slide-4 .bldg {
+  position: absolute; left: 0; top: 0;
+  width: 0; height: 0;
+  transform-style: preserve-3d;
+  --edge: 0.12;          /* 모서리 선 밝기 — JS가 점등 */
+  --glow: 0;             /* 글로우 세기 — JS가 펄스 */
+}
+#slide-4 .box {
+  position: absolute; left: 0; top: 0;
+  width: 0; height: 0;
+  transform-style: preserve-3d;
+}
+#slide-4 .face {
+  position: absolute; left: 0; top: 0;
+  border: 1px solid rgb(255 255 255 / var(--edge));
+  background-color: rgb(255 255 255 / calc(var(--edge) * 0.05));
+  box-shadow: 0 0 14px rgb(255 255 255 / var(--glow));
+}
+/* 측면 — 층·창 격자 */
+#slide-4 .face.side {
+  background-image:
+    repeating-linear-gradient(to bottom,
+      rgb(255 255 255 / calc(var(--edge) * 0.34)) 0 1px, transparent 1px 15px),
+    repeating-linear-gradient(to right,
+      rgb(255 255 255 / calc(var(--edge) * 0.16)) 0 1px, transparent 1px 19px);
+}
+/* 윗면 — 옥상 */
+#slide-4 .face.top {
+  background-image:
+    repeating-linear-gradient(to right,
+      rgb(255 255 255 / calc(var(--edge) * 0.2)) 0 1px, transparent 1px 16px);
+}
+
+/* ----- HUD 텍스트 (3D 위 2D 레이어) ----- */
+#slide-4 .hud {
+  position: absolute; inset: 0; z-index: 3;
+  pointer-events: none;
+}
+
+/* B-EMS / C-EMS 워드 — 작은 라벨에서 헤드라인으로 변신 */
+#slide-4 .ems {
+  position: absolute; left: 50%; top: 9%;
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: clamp(3rem, 7.6vw, 6.4rem);
+  letter-spacing: -0.005em;
+  line-height: 1;
+  color: var(--text);
+  white-space: nowrap;
+}
+#slide-4 .ems-pre { position: relative; display: inline-block; }
+#slide-4 .ems-pre .ch { display: inline-block; }
+#slide-4 .ems-pre .ch-b {
+  position: absolute; left: 0; top: 0;
+  width: 100%; text-align: center;
+}
+
+/* 부제 — 한글 */
+#slide-4 .cems-sub {
+  position: absolute; left: 50%; top: 23%;
+  font-family: 'Pretendard', sans-serif;
+  font-weight: 500;
+  font-size: clamp(0.95rem, 2vw, 1.32rem);
+  letter-spacing: 0.04em;
+  color: var(--dim);
+  white-space: nowrap;
+}
+
+/* ----- 좁은/세로 화면 폴백 ----- */
+@media (max-aspect-ratio: 1 / 1) {
+  #slide-4 .scene { perspective: 1100px; }
+  #slide-4 .ems { top: 11%; }
+  #slide-4 .cems-sub { top: 19%; }
+}

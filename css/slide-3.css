@@ -1,0 +1,130 @@
+/* ============================================================
+   slide-3.css — 슬라이드 3 (측정 · 피터 드러커 인용)
+   좌: 흑백 인물 사진(현상) · 우: 인용구(측정→관리→개선 체인 점화)
+   ============================================================ */
+
+#slide-3 { background: var(--bg); }
+
+/* ----- 배경 (슬라이드 1·2 톤 재사용 · 스포트라이트는 사진 쪽으로) ----- */
+#slide-3 .bg { position: absolute; inset: 0; z-index: 0; }
+
+#slide-3 .bg-spot {
+  position: absolute; left: 30%; top: 50%;
+  width: 1200px; height: 1200px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 64%);
+}
+
+#slide-3 .bg-vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 35% 50%, transparent 32%, rgba(0,0,0,0.62) 100%);
+}
+
+#slide-3 .particles { position: absolute; inset: 0; }
+#slide-3 .particle {
+  position: absolute; width: 3px; height: 3px;
+  border-radius: 50%; background: #fff;
+}
+
+/* ----- 무대 — 좌우 분할 ----- */
+#slide-3 .stage {
+  position: relative; z-index: 2; height: 100%;
+  display: flex; align-items: center;
+}
+
+/* ----- 좌: 인물 사진 ----- */
+#slide-3 .portrait {
+  position: relative;
+  flex: 0 0 42%;
+  height: 100%;
+  overflow: hidden;
+  background: #101012;            /* 사진이 없을 때 어둠으로 우아하게 대체 */
+}
+#slide-3 .portrait-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: 50% 30%;       /* 얼굴 기준 크롭 */
+  filter: grayscale(1) brightness(0.85) contrast(1.04);
+  will-change: filter, opacity, transform;
+}
+/* 사방 비네팅 — 안쪽(우측) 가장자리를 검정으로 페이드해 분할선을 지움 */
+#slide-3 .portrait-fade {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to right,
+      rgba(10,10,11,0.55) 0%, transparent 14%,
+      transparent 58%, var(--bg) 100%),
+    linear-gradient(to bottom,
+      rgba(10,10,11,0.5) 0%, transparent 22%,
+      transparent 78%, rgba(10,10,11,0.62) 100%);
+}
+
+/* ----- 우: 인용구 ----- */
+#slide-3 .quote {
+  flex: 1 1 58%;
+  padding: 0 4vw 0 5vw;
+  max-width: 64ch;
+}
+
+/* 출처 라벨 — 슬라이드 1 .label 톤 */
+#slide-3 .attr { margin-bottom: 2.4rem; }
+#slide-3 .attr-name {
+  display: block;
+  font-size: 0.78rem; letter-spacing: 0.42em; text-transform: uppercase;
+  color: var(--text); font-weight: 600;
+}
+#slide-3 .attr-role {
+  display: block; margin-top: 0.5rem;
+  font-size: 0.86rem; letter-spacing: 0.02em;
+  color: var(--dim); font-weight: 400;
+}
+#slide-3 .attr-rule {
+  display: block; margin-top: 1.1rem;
+  width: 3.2rem; height: 1px;       /* JS가 0 → 이 너비로 그음 */
+  background: rgba(244, 244, 242, 0.22);
+}
+
+/* 히어로 인용구 — 본문은 흐리게, 체인 단어만 솔리드. 각 문장은 한 줄에 들어간다. */
+#slide-3 .saying {
+  position: relative;
+  font-family: 'Pretendard', sans-serif;
+  font-weight: 500;
+  font-size: clamp(1.6rem, 2.8vw, 2.7rem);
+  line-height: 1.5;
+  letter-spacing: -0.014em;
+  color: var(--dim);
+}
+#slide-3 .saying .line { display: block; white-space: nowrap; }
+
+/* 큰 따옴표 — 은은한 장식 */
+#slide-3 .saying .mark {
+  position: absolute;
+  left: -0.6em; top: -0.34em;
+  font-family: 'Fraunces', serif;
+  font-size: 2.2em; line-height: 1;
+  color: rgba(244, 244, 242, 0.1);
+  pointer-events: none;
+}
+
+/* 체인 키워드 — 측정 · 관리 · 개선 (JS가 흐림 → 솔리드+글로우 점화) */
+#slide-3 .saying .kw {
+  display: inline-block;            /* scale 펄스를 위해 */
+  font-style: normal;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* ----- 좁은/세로 화면 폴백 — 위아래로 쌓음 ----- */
+@media (max-aspect-ratio: 1 / 1) {
+  #slide-3 .stage { flex-direction: column; }
+  #slide-3 .portrait { flex: 0 0 42%; width: 100%; }
+  #slide-3 .portrait-fade {
+    background:
+      linear-gradient(to bottom,
+        rgba(10,10,11,0.5) 0%, transparent 20%,
+        transparent 56%, var(--bg) 100%);
+  }
+  #slide-3 .quote { flex: 0 0 auto; padding: 2.2rem 8vw; }
+  #slide-3 .attr { margin-bottom: 1.4rem; }
+}

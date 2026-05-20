@@ -1,0 +1,90 @@
+/* ============================================================
+   slide-1.css — 슬라이드 1 (인트로 · 팀 Aice 등장)
+   ============================================================ */
+
+#slide-1 { background: var(--bg); }
+
+/* ----- 배경 ----- */
+#slide-1 .bg { position: absolute; inset: 0; z-index: 0; }
+
+#slide-1 .bg-spot {
+  position: absolute; left: 50%; top: 42%;
+  width: 1100px; height: 1100px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255,255,255,0.075) 0%, transparent 64%);
+}
+
+#slide-1 .bg-vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 42%, transparent 32%, rgba(0,0,0,0.55) 100%);
+}
+
+#slide-1 .particles { position: absolute; inset: 0; }
+#slide-1 .particle {
+  position: absolute; width: 3px; height: 3px;
+  border-radius: 50%; background: #fff;
+}
+
+/* ----- 무대 ----- */
+#slide-1 .stage {
+  position: relative; z-index: 2; height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 1.9rem;
+  opacity: 0;            /* 인트로 타임라인이 페이드 인 */
+}
+
+#slide-1 .label {
+  font-size: 0.78rem; letter-spacing: 0.5em; text-transform: uppercase;
+  color: var(--dim); font-weight: 600; padding-left: 0.5em;
+}
+
+/* ----- 워드마크 ----- */
+#slide-1 .word {
+  display: flex; align-items: flex-end; line-height: 1;
+  font-family: 'Fraunces', serif; font-weight: 600;
+  font-size: clamp(4.5rem, 13.5vw, 11rem);
+  letter-spacing: -0.005em;
+}
+#slide-1 .letter { position: relative; display: inline-block; line-height: 1; }
+#slide-1 .ink {
+  display: block;
+  color: transparent;
+  -webkit-text-stroke: 0.013em var(--text);   /* 윤곽선 — A·i 는 JS가 채움 */
+}
+#slide-1 .slot {
+  position: relative; display: inline-block;
+  width: 0; height: 1em; flex: 0 0 auto;       /* "i"가 들어올 자리 */
+}
+#slide-1 #letterI { position: absolute; left: 50%; bottom: 0; }
+
+/* ----- 태그라인 ----- */
+#slide-1 .tagline {
+  font-size: clamp(0.95rem, 2.05vw, 1.26rem);
+  color: var(--dim); font-weight: 500; text-align: center;
+}
+#slide-1 .tagline b { color: var(--text); font-weight: 600; }
+
+/* ----- 팀원 ----- */
+#slide-1 .team { display: flex; align-items: stretch; margin-top: 1.5rem; }
+
+#slide-1 .member {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 0.34rem; padding: 0 2.5rem; text-align: center;
+}
+#slide-1 .member + .member::before {
+  content: ""; position: absolute; left: 0; top: 14%;
+  height: 72%; width: 1px;
+  background: rgba(244, 244, 242, 0.13);
+}
+#slide-1 .member .role {
+  font-size: 0.63rem; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--dim); font-weight: 600;
+}
+#slide-1 .member.lead .role { color: var(--text); }   /* 팀장 강조 */
+#slide-1 .member .name {
+  font-size: 1.28rem; font-weight: 600;
+  color: var(--text); letter-spacing: 0.01em;
+}
+#slide-1 .member .major { font-size: 0.8rem; color: var(--dim); font-weight: 400; }

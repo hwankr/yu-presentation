@@ -1,0 +1,59 @@
+/* ============================================================
+   slide-2.css — 슬라이드 2 (핵심 인사이트 · "관리")
+   여러 키워드가 빛나다 전등 꺼지듯 소등 → 끝까지 "관리"만 남아 피어오름
+   ============================================================ */
+
+#slide-2 { background: var(--bg); }
+
+/* ----- 배경 (슬라이드 1 톤 재사용) ----- */
+#slide-2 .bg { position: absolute; inset: 0; z-index: 0; }
+
+#slide-2 .bg-spot {
+  position: absolute; left: 50%; top: 50%;
+  width: 1200px; height: 1200px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 64%);
+}
+
+#slide-2 .bg-vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 50%, transparent 30%, rgba(0,0,0,0.6) 100%);
+}
+
+#slide-2 .particles { position: absolute; inset: 0; }
+#slide-2 .particle {
+  position: absolute; width: 3px; height: 3px;
+  border-radius: 50%; background: #fff;
+}
+
+/* ----- 무대 ----- */
+#slide-2 .stage {
+  position: relative; z-index: 2; height: 100%;
+}
+
+/* ----- 흩뿌린 키워드 — 빛나는 글자(전등) ----- */
+#slide-2 .field { position: absolute; inset: 0; }
+
+#slide-2 .kw {
+  position: absolute;
+  font-family: 'Pretendard', sans-serif;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text);                 /* 솔리드 — 글로우는 JS가 점등/소등 */
+  will-change: transform, opacity, filter;
+}
+
+/* ----- 히어로 단어 "관리" — 끝까지 남아 크게 피어오름 ----- */
+#slide-2 .core {
+  position: absolute; left: 50%; top: 50%;   /* 중앙 고정, 정렬은 JS transform */
+  z-index: 5;
+  will-change: transform, opacity, filter;
+}
+#slide-2 .core-ink {
+  display: block; line-height: 1;
+  font-family: 'Pretendard', sans-serif;
+  font-weight: 800;
+  font-size: clamp(4.5rem, 13vw, 12rem);     /* 히어로 크기 — 필드 단계엔 축소 표시 */
+  letter-spacing: 0.02em;
+  color: var(--text);
+}

@@ -1,0 +1,54 @@
+/* ============================================================
+   base.css — 전역 공통 (폰트 · 리셋 · 변수 · 덱 레이아웃)
+   ============================================================ */
+
+/* ----- 폰트 (로컬 · 오프라인) ----- */
+@font-face {
+  font-family: 'Fraunces';
+  src: url('../assets/fonts/Fraunces.woff2') format('woff2');
+  font-weight: 300 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Pretendard';
+  src: url('../assets/fonts/PretendardVariable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+/* ----- 리셋 ----- */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; }
+
+/* ----- 전역 변수 ----- */
+:root {
+  --bg:   #0a0a0b;
+  --text: #f4f4f2;
+  --dim:  rgba(244, 244, 242, 0.42);
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Pretendard', system-ui, sans-serif;
+  overflow: hidden;
+}
+
+/* ----- 덱 / 슬라이드 ----- */
+#deck {
+  position: relative;
+  height: 100vh;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;     /* 슬라이드 단위 스냅 */
+  scroll-behavior: smooth;
+  scrollbar-width: none;             /* Firefox — 스크롤바 숨김 */
+}
+#deck::-webkit-scrollbar { width: 0; height: 0; }   /* Chrome · Safari */
+
+.slide {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  scroll-snap-align: start;
+}
