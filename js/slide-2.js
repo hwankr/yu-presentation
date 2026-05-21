@@ -1,15 +1,18 @@
 /* ============================================================
    slide-2.js — 슬라이드 2 (핵심 인사이트 · "관리") 애니메이션
-   여러 에너지 키워드가 빛나다 → 전등 꺼지듯 하나하나 소등 →
-   끝까지 "관리" 하나만 남아 영화처럼 크게 피어오른다.
-   전역 객체 AiceSlide2 { init, replay } 노출
+   진입 시: 에너지 키워드들이 흩어진 채 하나둘 불을 켠다(자동).
+   스페이스바: 전등 꺼지듯 하나하나 소등 → 끝까지 "관리"만 남아
+   영화처럼 크게 피어오른다.
+   전역 객체 AiceSlide2 { init, replay, advance } 노출
    ============================================================ */
 window.AiceSlide2 = (function () {
   'use strict';
 
-  var tl;            // 메인 타임라인
+  var tlEnter;       // 입장 타임라인 — 키워드 점등 (뷰포트 진입 시 자동)
+  var tlConverge;    // 수렴 타임라인 — 소등 → '관리' 개화 (스페이스바)
   var kwEls = [];    // 키워드 요소 배열
-  var played = false;
+  var played = false;     // 입장(점등)이 시작됐는가
+  var converged = false;  // 수렴이 시작됐는가
 
   /* 빛났다 꺼질 에너지 절약 키워드 (편집 가능) */
   var KEYWORDS = [
@@ -87,7 +90,7 @@ window.AiceSlide2 = (function () {
 
       field.appendChild(el);
 
-      // '켜진(빛나는)' 상태를 쉬는 값으로 저장 — build()의 .from 이 여기서 점등
+      // '켜진(빛나는)' 상태를 쉬는 값으로 저장 — tlEnter의 .from 이 여기서 점등
       var litOp = 0.78 + depth * 0.22;
       var glow  = 'drop-shadow(0 0 ' + (8 + depth * 15).toFixed(1) +
                   'px rgba(255,255,255,' + (0.32 + depth * 0.4).toFixed(2) + '))';
@@ -97,14 +100,15 @@ window.AiceSlide2 = (function () {
     }
   }
 
-  /* ----- 타임라인 ----- */
+  /* ----- 타임라인 (입장 · 수렴) ----- */
   function build() {
     var core    = document.querySelector('#slide-2 .core');
     var coreInk = document.querySelector('#slide-2 .core-ink');
     var spot    = document.querySelector('#slide-2 .bg-spot');
     if (!core || !coreInk || !kwEls.length) return;
 
-    if (tl) tl.kill();
+    if (tlEnter)    tlEnter.kill();
+    if (tlConverge) tlConverge.kill();
 
     var SMALL = 0.18;                                  // 필드 단계 '관리' 축소 배율
     var coreLit   = 'drop-shadow(0 0 24px rgba(255,255,255,0.5))';
@@ -113,22 +117,21 @@ window.AiceSlide2 = (function () {
 
     gsap.set(coreInk, { color: 'rgba(244,244,242,1)' });
     gsap.set(core, { xPercent: -50, yPercent: -50, scale: SMALL, filter: coreLit });
+    gsap.set(spot, { opacity: 1 });                    // 재생 대비 — 스포트라이트 원복
 
-    tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
-
-    // 1) 점등 — 키워드들과 '관리'가 하나둘 불을 켠다
-    tl.from(kwEls, {
+    /* ── 입장 — 키워드들과 '관리'가 흩어진 채 하나둘 불을 켠다 ── */
+    tlEnter = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
+    tlEnter.from(kwEls, {
       opacity: 0, scale: 0.72, filter: OFF_GLOW,
       duration: 0.75, ease: 'power2.out',
       stagger: { each: 0.045, from: 'random' }
     }, 0);
-    tl.from(core, { opacity: 0, duration: 0.85, ease: 'power2.out' }, 0.3);
+    tlEnter.from(core, { opacity: 0, duration: 0.85, ease: 'power2.out' }, 0.3);
 
-    // 2) 짧은 호흡 — 모든 글자가 빛나는 상태
-    tl.addLabel('lit', 2.3);
+    /* ── 수렴 — 스페이스바: 소등 → '관리'가 피어오른다 ── */
+    tlConverge = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
 
-    // 3) 소등 — 전등 꺼지듯 하나하나 (무작위 순서, 빨라졌다 마지막 몇 개는 느려짐)
-    tl.addLabel('off', 'lit');
+    // 1) 소등 — 전등 꺼지듯 하나하나 (무작위 순서, 빨라졌다 마지막 몇 개는 느려짐)
     var order = shuffle(kwEls.slice());
     var N = order.length, t = 0;
     for (var i = 0; i < N; i++) {
@@ -141,7 +144,7 @@ window.AiceSlide2 = (function () {
          .to(el, { opacity: '*=2.7', duration: fd * 0.8, ease: 'none' })    // 깜빡 — 되살아남
          .to(el, { opacity: 0, filter: OFF_GLOW,                            // 소등
                    duration: 0.3 + Math.random() * 0.12, ease: 'power2.in' });
-      tl.add(sub, 'off+=' + t.toFixed(3));
+      tlConverge.add(sub, t.toFixed(3));
 
       var gap = (p < 0.72)
         ? 0.20 - 0.14 * (p / 0.72)                     // 가속
@@ -150,25 +153,23 @@ window.AiceSlide2 = (function () {
     }
 
     // 어둠이 깔리며 '관리'의 빛이 강해지고, 배경 스포트라이트는 사그라든다
-    tl.to(core, { filter: coreFocus, duration: t * 0.85, ease: 'power1.in' }, 'off+=0.3');
-    tl.to(spot, { opacity: 0.32,     duration: t * 0.75, ease: 'power1.in' }, 'off');
+    tlConverge.to(core, { filter: coreFocus, duration: t * 0.85, ease: 'power1.in' }, 0.3);
+    tlConverge.to(spot, { opacity: 0.32,     duration: t * 0.75, ease: 'power1.in' }, 0);
 
-    // 4) 정적 — '관리' 하나만 어둠 속에 남는다
-    tl.addLabel('alone', 'off+=' + (t + 0.45).toFixed(3));
+    // 2) 정적 — '관리' 하나만 어둠 속에 남는다
+    tlConverge.addLabel('alone', (t + 0.45).toFixed(3));
 
-    // 5) 개화 — '관리'가 영화처럼 크게 피어오른다
-    tl.to(core, { scale: 1,        duration: 1.7, ease: 'expo.out'  }, 'alone');
-    tl.to(core, { filter: coreHero, duration: 1.8, ease: 'power2.out' }, 'alone+=0.05');
-    tl.to(spot, { opacity: 1,       duration: 1.9, ease: 'power2.out' }, 'alone+=0.1');
-
-    return tl;
+    // 3) 개화 — '관리'가 영화처럼 크게 피어오른다
+    tlConverge.to(core, { scale: 1,        duration: 1.7, ease: 'expo.out'  }, 'alone');
+    tlConverge.to(core, { filter: coreHero, duration: 1.8, ease: 'power2.out' }, 'alone+=0.05');
+    tlConverge.to(spot, { opacity: 1,       duration: 1.9, ease: 'power2.out' }, 'alone+=0.1');
   }
 
-  /* ----- 뷰포트 진입 시 1회 재생 ----- */
+  /* ----- 뷰포트 진입 시 입장(점등) 1회 재생 ----- */
   function play() {
-    if (!tl || played) return;
+    if (!tlEnter || played) return;
     played = true;
-    tl.play(0);
+    tlEnter.play(0);
   }
 
   function observe() {
@@ -187,6 +188,23 @@ window.AiceSlide2 = (function () {
     io.observe(el);
   }
 
+  /* ----- 발표자 단계 진행 (스페이스바) -----
+     반환 true = 내부 단계 소비(덱 멈춤) · false = 더 없음(덱이 다음 슬라이드로) */
+  function advance() {
+    if (!played) { play(); return true; }            // 안전장치 — 점등 먼저
+    if (!converged) {
+      converged = true;
+      if (tlEnter && tlEnter.progress() < 1) tlEnter.progress(1);   // 점등 즉시 완료
+      tlConverge.play(0);                            // '관리'로 모여들기 시작
+      return true;
+    }
+    if (tlConverge && tlConverge.progress() < 1) {   // 수렴 중이면 끝까지 당김
+      tlConverge.progress(1);
+      return true;
+    }
+    return false;   // 수렴까지 끝 → 다음 슬라이드
+  }
+
   /* ----- 공개 API ----- */
   function setup() {
     scatter();
@@ -203,10 +221,11 @@ window.AiceSlide2 = (function () {
   }
   function replay() {
     played = false;
+    converged = false;
     scatter();
     build();
     play();
   }
 
-  return { init: init, replay: replay };
+  return { init: init, replay: replay, advance: advance };
 })();

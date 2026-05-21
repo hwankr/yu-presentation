@@ -43,6 +43,7 @@
   /* ----- 슬라이드 내부 단계 진행 (슬라이드 3의 가계부 3단계, 슬라이드 4의 B-EMS→C-EMS) ----- */
   function advanceCurrent() {
     var id = slides()[currentIndex()].id;
+    if (id === 'slide-2') return AiceSlide2.advance();
     if (id === 'slide-3') return AiceSlide3.advance();
     if (id === 'slide-4') return AiceSlide4.advance();
     return false;
