@@ -1,61 +1,42 @@
 /* ============================================================
-   slide-6.js — 슬라이드 6 (SWOT 분석)
-   2×2 매트릭스가 자동 재생된다. eyebrow → 외곽 프레임 → 십자
-   분할선 드로잉 → 네 사분면이 순서대로 캐스케이드 등장 → 킥커.
-   사분면을 클릭하면 그 칸이 매트릭스 중앙으로 확대된다 — 발표자가
-   사분면을 하나씩 짚으며 설명할 수 있다.
-   끝까지 남는 키워드는 "전략".
+   slide-6.js — 슬라이드 6 (현장 적용 · Before → After 전환)
+   학교 시설팀 인터뷰로 검증한 활용 효과가 자동 재생된다.
+   eyebrow → 인터뷰 출처 앵커 → 전환 행(현재 윤곽선 → 화살표
+   드로잉 → Campus-EMS 솔리드 점화) → 향후 방향 밴드 → 킥커.
+   끝까지 남는 키워드는 "운영".
    전역 객체 AiceSlide6 { init, replay } 노출
    ============================================================ */
 window.AiceSlide6 = (function () {
   'use strict';
 
-  /* ----- SWOT 콘텐츠 (편집 가능) — DOM·그리드 순서: S · W · O · T ----- */
-  var QUADS = [
+  /* ----- 전환 행 (편집 가능) — 현재 방식 → Campus-EMS 적용 ----- */
+  var ROWS = [
     {
-      letter: 'S', ko: '강점', en: 'Strength', tone: 'pos',
-      items: [
-        { lead: '선제적 운영',         sub: '피크 시간대를 미리 감지해 전기 요금 절감' },
-        { lead: '데이터 기반 의사결정', sub: '투자 회수·예산 집행의 판단 근거 확보' },
-        { lead: '운영 효율 개선',       sub: '지능형 가동 제어로 수작업 오류 감소' }
-      ]
+      cat: '공용 전자기기 운영',
+      now: { main: '기온 30°C 이상 · 3일 연속', sub: '고정된 가동 기준 — 잦은 민원' },
+      ems: { main: '상황을 읽는 유연한 운영',    sub: '합리적인 공용기기 제어' }
     },
     {
-      letter: 'W', ko: '약점', en: 'Weakness', tone: 'neg',
-      items: [
-        { lead: '예측 모델 오차',  sub: '정확도가 학습 데이터의 양·질에 의존' },
-        { lead: '제어 연동 한계',  sub: '실시간 자동 제어가 아직 미완성' },
-        { lead: 'UI/UX 직관성',    sub: '일반 사용자 대상 시각화 개선 필요' }
-      ]
-    },
-    {
-      letter: 'O', ko: '기회', en: 'Opportunity', tone: 'pos',
-      items: [
-        { lead: '정책 연계',       sub: 'RE100·탄소중립 국고 지원 사업과 직결' },
-        { lead: '대외 경쟁력',     sub: 'ESG 성과를 대학 경쟁력으로 전환' },
-        { lead: '자산화·확장성',   sub: '누적 데이터가 리모델링 기획 자산' }
-      ]
-    },
-    {
-      letter: 'T', ko: '위협', en: 'Threat', tone: 'neg',
-      items: [
-        { lead: '차별성 입증',     sub: '기존 BEMS 대비 기술 우위 입증 필요' },
-        { lead: '규제·행정 장벽',  sub: '복잡한 시설 관리 행정 절차' },
-        { lead: '지속가능성 확보', sub: '배포 후 고도화·유지보수 인력·예산' }
-      ]
+      cat: '피크 전력 관리',
+      now: { main: '건물별 순환 전원 차단',      sub: '일괄적이고 단순한 차단 방식' },
+      ems: { main: '예측 기반 정교한 제어',      sub: '전력 사용량 예측으로 제어 로직 설계' }
     }
   ];
 
-  /* 사분면 등장 시점(초) — 읽기 순서 S → W → O → T (편집 가능) */
-  var QUAD_AT = [1.35, 1.92, 2.49, 3.06];
+  /* ----- 향후 방향 단계 (편집 가능) ----- */
+  var FUTURE = [
+    { n: '01', title: '학생에게 대시보드 공개', sub: '시설팀 전용 → 모두에게' },
+    { n: '02', title: '건물별 사용량 비교',     sub: '선의의 경쟁을 유도' },
+    { n: '03', title: '인센티브로 능동적 절감', sub: '스스로 줄이는 캠퍼스' }
+  ];
 
-  /* hover 시 사분면이 중앙으로 확대되는 배율 (편집 가능) */
-  var EXPAND_SCALE = 1.62;
+  /* ----- 타임라인 비트 (초, 편집 가능) ----- */
+  var ROW_AT    = [1.15, 2.7];   // 각 전환 행 등장 시점
+  var FUTURE_AT = 4.5;           // 향후 방향 밴드 등장
+  var KICK_AT   = 6.05;          // 마무리 킥커
 
   var tl;
   var played = false;
-  var interactive = false;     // 클릭 인터랙션 활성 여부
-  var focusedQuad = null;      // 현재 확대된 사분면 (없으면 null)
   var ambient = [];
 
   /* ============================================================
@@ -84,30 +65,62 @@ window.AiceSlide6 = (function () {
   }
 
   /* ============================================================
-     사분면 DOM 생성 — QUADS 배열로 네 카드를 채운다
+     전환 행 DOM 생성 — ROWS 배열로 현재·Campus-EMS 카드를 채운다
      ============================================================ */
-  function buildQuads() {
-    var quads = document.querySelectorAll('#s6-swot .quad');
-    for (var i = 0; i < quads.length && i < QUADS.length; i++) {
-      var q = QUADS[i];
-      var html = '';
-      html += '<span class="ghost" aria-hidden="true">' + q.letter + '</span>';
-      html += '<div class="quad-head">';
-      html +=   '<span class="badge">' + q.letter + '</span>';
-      html +=   '<div class="quad-titles">';
-      html +=     '<span class="quad-ko">' + q.ko + '</span>';
-      html +=     '<span class="quad-en">' + q.en + '</span>';
-      html +=   '</div>';
-      html += '</div>';
-      html += '<ul class="items">';
-      for (var j = 0; j < q.items.length; j++) {
-        html += '<li class="item">' +
-                  '<span class="item-lead">' + q.items[j].lead + '</span>' +
-                  '<span class="item-sub">' + q.items[j].sub + '</span>' +
-                '</li>';
+  function buildRows() {
+    var host = document.getElementById('s6-rows');
+    if (!host) return;
+    host.innerHTML = '';
+    for (var i = 0; i < ROWS.length; i++) {
+      var r = ROWS[i];
+      var row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML =
+        '<span class="row-cat">' + r.cat + '</span>' +
+        '<div class="row-body">' +
+          '<div class="card card-now">' +
+            '<span class="card-tag">현재</span>' +
+            '<strong class="card-main">' + r.now.main + '</strong>' +
+            '<span class="card-sub">' + r.now.sub + '</span>' +
+          '</div>' +
+          '<svg class="row-arrow" viewBox="0 0 96 28" aria-hidden="true">' +
+            '<path class="arrow-path" d="M 8,14 L 82,14 L 70,7 L 82,14 L 70,21"/>' +
+          '</svg>' +
+          '<div class="card card-ems">' +
+            '<span class="card-tag">Campus-EMS 적용</span>' +
+            '<strong class="card-main">' + r.ems.main + '</strong>' +
+            '<span class="card-sub">' + r.ems.sub + '</span>' +
+          '</div>' +
+        '</div>';
+      host.appendChild(row);
+    }
+  }
+
+  /* ============================================================
+     향후 방향 밴드 DOM 생성 — FUTURE 배열로 단계를 채운다
+     ============================================================ */
+  function buildFuture() {
+    var host = document.getElementById('s6-future-track');
+    if (!host) return;
+    host.innerHTML = '';
+    for (var i = 0; i < FUTURE.length; i++) {
+      if (i > 0) {
+        var sep = document.createElement('span');
+        sep.className = 'fsep';
+        sep.setAttribute('aria-hidden', 'true');
+        sep.textContent = '▸';
+        host.appendChild(sep);
       }
-      html += '</ul>';
-      quads[i].innerHTML = html;
+      var f = FUTURE[i];
+      var step = document.createElement('div');
+      step.className = 'fstep';
+      step.innerHTML =
+        '<span class="fnum">' + f.n + '</span>' +
+        '<div class="ftext">' +
+          '<strong class="ftitle">' + f.title + '</strong>' +
+          '<span class="fsub">' + f.sub + '</span>' +
+        '</div>';
+      host.appendChild(step);
     }
   }
 
@@ -115,188 +128,112 @@ window.AiceSlide6 = (function () {
      타임라인
      ============================================================ */
   function build() {
-    var eyebrow = document.getElementById('s6-eyebrow');
-    var spot    = document.querySelector('#slide-6 .bg-spot');
-    var frame   = document.querySelector('#s6-swot .swot-frame');
-    var divH    = document.querySelector('#s6-swot .div-h');
-    var divV    = document.querySelector('#s6-swot .div-v');
-    var node    = document.querySelector('#s6-swot .node');
-    var quads   = document.querySelectorAll('#s6-swot .quad');
-    var kicker  = document.getElementById('s6-kicker');
-    if (!quads.length || !frame) return;
+    var eyebrow     = document.getElementById('s6-eyebrow');
+    var spot        = document.querySelector('#slide-6 .bg-spot');
+    var credLine    = document.querySelector('#s6-cred .cred-line');
+    var credSub     = document.querySelector('#s6-cred .cred-sub');
+    var rows        = document.querySelectorAll('#s6-rows .row');
+    var future      = document.getElementById('s6-future');
+    var futureLabel = document.querySelector('#s6-future .future-label');
+    var fsteps      = document.querySelectorAll('#s6-future .fstep');
+    var fseps       = document.querySelectorAll('#s6-future .fsep');
+    var kicker      = document.getElementById('s6-kicker');
+    var kw          = document.querySelector('#slide-6 .kicker .kw');
+    if (!rows.length || !future) return;
 
     if (tl) tl.kill();
     killAmbient();
-    interactive = false;
-    focusedQuad = null;
 
     /* ----- 초기 상태 ----- */
     gsap.set(spot, { opacity: 0.5 });
     gsap.set(eyebrow, { opacity: 0, y: -8 });
-    gsap.set(frame, { opacity: 0 });
-    gsap.set(divH, { scaleX: 0 });
-    gsap.set(divV, { scaleY: 0 });
-    gsap.set(node, { scale: 0 });
+    gsap.set(credLine, { opacity: 0, y: 8 });
+    gsap.set(credSub, { opacity: 0 });
+    gsap.set(future, { opacity: 0, y: 14 });
+    gsap.set(futureLabel, { opacity: 0 });
+    gsap.set(fsteps, { opacity: 0, y: 10 });
+    gsap.set(fseps, { opacity: 0, scale: 0.5 });
     gsap.set(kicker, { opacity: 0, y: 10 });
+    gsap.set(kw, { filter: 'drop-shadow(0 0 0px rgba(255,255,255,0))' });
 
     var i;
-    for (i = 0; i < quads.length; i++) {
-      gsap.set(quads[i], {
-        opacity: 0, scale: 0.94, x: 0, y: 12,
-        backgroundColor: 'rgba(244,244,242,0)',
-        boxShadow: '0 0 0 0 rgba(244,244,242,0)'
-      });
-      gsap.set(quads[i].querySelector('.ghost'), {
-        opacity: 0, scale: 0.78, transformOrigin: '100% 100%'
-      });
-      gsap.set(quads[i].querySelector('.badge'), { opacity: 0, scale: 0.6 });
-      gsap.set(quads[i].querySelectorAll('.quad-ko, .quad-en'), { opacity: 0, x: -10 });
-      gsap.set(quads[i].querySelectorAll('.item'), { opacity: 0, x: -12 });
-      quads[i].style.zIndex = '';
+    for (i = 0; i < rows.length; i++) {
+      var cat   = rows[i].querySelector('.row-cat');
+      var now   = rows[i].querySelector('.card-now');
+      var ems   = rows[i].querySelector('.card-ems');
+      var arrow = rows[i].querySelector('.arrow-path');
+      gsap.set(cat, { opacity: 0, y: -6 });
+      gsap.set(now, { opacity: 0, y: 12 });
+      gsap.set(ems, { opacity: 0, y: 12, '--emsglow': 0 });
+      var len = arrow.getTotalLength ? arrow.getTotalLength() : 116;
+      gsap.set(arrow, { strokeDasharray: len, strokeDashoffset: len });
     }
 
     /* ----- 타임라인 ----- */
     tl = gsap.timeline({
       paused: true,
       defaults: { ease: 'power3.out' },
-      onComplete: onIntroDone
+      onComplete: startAmbient
     });
 
     /* 1) eyebrow */
     tl.to(eyebrow, { opacity: 1, y: 0, duration: 0.7 }, 0);
 
-    /* 2) 외곽 프레임 → 십자 분할선 드로잉 → 중심 노드 */
-    tl.to(frame, { opacity: 1, duration: 0.7, ease: 'power2.out' }, 0.35);
-    tl.to(divH, { scaleX: 1, duration: 0.8, ease: 'expo.out' }, 0.5);
-    tl.to(divV, { scaleY: 1, duration: 0.8, ease: 'expo.out' }, 0.66);
-    tl.to(node, { scale: 1, duration: 0.5, ease: 'power3.out' }, 1.12);
+    /* 2) 인터뷰 출처 앵커 — 현장 검증의 신뢰 도장 */
+    tl.to(credLine, { opacity: 1, y: 0, duration: 0.7 }, 0.35);
+    tl.to(credSub, { opacity: 1, duration: 0.6 }, 0.72);
 
-    /* 3) 네 사분면 캐스케이드 등장 */
-    for (i = 0; i < quads.length; i++) {
-      revealQuad(tl, quads[i], QUAD_AT[i]);
+    /* 3) 전환 행 — 현재(윤곽선) → 화살표 → Campus-EMS(솔리드 점화) */
+    for (i = 0; i < rows.length; i++) {
+      revealRow(tl, rows[i], ROW_AT[i]);
     }
 
-    /* 4) 마무리 킥커 — "전략" 솔리드 강조 */
-    var last = QUAD_AT[QUAD_AT.length - 1];
-    tl.to(kicker, { opacity: 1, y: 0, duration: 0.85, ease: 'power3.out' }, last + 1.45);
+    /* 4) 향후 방향 밴드 — 3단계 좌→우 캐스케이드 */
+    tl.to(future, { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, FUTURE_AT);
+    tl.to(futureLabel, { opacity: 1, duration: 0.45 }, FUTURE_AT + 0.15);
+    tl.to(fsteps, { opacity: 1, y: 0, duration: 0.55, stagger: 0.34 }, FUTURE_AT + 0.32);
+    tl.to(fseps, { opacity: 1, scale: 1, duration: 0.4, stagger: 0.34 }, FUTURE_AT + 0.5);
+
+    /* 5) 마무리 킥커 — "운영" 솔리드 강조 */
+    tl.to(kicker, { opacity: 1, y: 0, duration: 0.85 }, KICK_AT);
+    tl.to(kw, {
+      filter: 'drop-shadow(0 0 14px rgba(255,255,255,0.42))',
+      duration: 0.9, ease: 'power2.out'
+    }, KICK_AT + 0.15);
 
     return tl;
   }
 
-  /* 사분면 한 칸 — 카드 → 고스트 글자 → 배지 → 라벨 → 항목 캐스케이드 */
-  function revealQuad(timeline, quad, at) {
-    var ghost  = quad.querySelector('.ghost');
-    var badge  = quad.querySelector('.badge');
-    var titles = quad.querySelectorAll('.quad-ko, .quad-en');
-    var items  = quad.querySelectorAll('.item');
+  /* 전환 행 한 줄 — 행 라벨 → 현재 카드 → 화살표 드로잉 → Campus-EMS 점화 */
+  function revealRow(timeline, row, at) {
+    var cat   = row.querySelector('.row-cat');
+    var now   = row.querySelector('.card-now');
+    var ems   = row.querySelector('.card-ems');
+    var arrow = row.querySelector('.arrow-path');
 
-    timeline.to(quad,   { opacity: 1, scale: 1, y: 0, duration: 0.66 }, at);
-    timeline.to(ghost,  { opacity: 1, scale: 1, duration: 0.9, ease: 'power2.out' }, at + 0.04);
-    timeline.to(badge,  { opacity: 1, scale: 1, duration: 0.5 }, at + 0.12);
-    timeline.to(titles, { opacity: 1, x: 0, duration: 0.5, stagger: 0.06 }, at + 0.18);
-    timeline.to(items,  { opacity: 1, x: 0, duration: 0.52, stagger: 0.085 }, at + 0.3);
+    timeline.to(cat, { opacity: 1, y: 0, duration: 0.5 }, at);
+    timeline.to(now, { opacity: 1, y: 0, duration: 0.62 }, at + 0.16);
+    timeline.to(arrow, {
+      strokeDashoffset: 0, duration: 0.55, ease: 'power2.inOut'
+    }, at + 0.6);
+    timeline.to(ems, { opacity: 1, y: 0, duration: 0.62 }, at + 1.02);
+    /* 솔리드 점화 — 글로우 섬광 후 은은하게 안정 */
+    timeline.to(ems, { '--emsglow': 0.85, duration: 0.32, ease: 'power2.out' }, at + 1.12);
+    timeline.to(ems, { '--emsglow': 0.3,  duration: 0.7,  ease: 'power2.out' }, at + 1.44);
   }
 
   /* ============================================================
-     인터랙티브 — 사분면 클릭 확대
-     클릭한 사분면이 매트릭스 중앙으로 확대된다. 같은 칸을 다시
-     클릭하거나 바깥을 클릭하면 원래 자리로 돌아간다.
-     ============================================================ */
-  function onIntroDone() {
-    interactive = true;
-    startAmbient();
-  }
-
-  function bindClicks() {
-    var quads = document.querySelectorAll('#s6-swot .quad');
-    for (var i = 0; i < quads.length; i++) {
-      (function (el) {
-        el.addEventListener('click', function (e) {
-          e.stopPropagation();          /* 슬라이드 레벨 핸들러로 전파 방지 */
-          toggleQuad(el);
-        });
-      })(quads[i]);
-    }
-    /* 사분면 바깥(빈 영역)을 클릭하면 확대를 해제한다 */
-    var slide = document.getElementById('slide-6');
-    if (slide) {
-      slide.addEventListener('click', function () {
-        if (interactive && focusedQuad) {
-          unfocusAll();
-          focusedQuad = null;
-        }
-      });
-    }
-  }
-
-  /* 클릭 토글 — 같은 칸이면 닫고, 다른 칸이면 그 칸으로 전환 */
-  function toggleQuad(el) {
-    if (!interactive) return;
-    if (focusedQuad === el) {
-      unfocusAll();
-      focusedQuad = null;
-    } else {
-      focusQuad(el);
-      focusedQuad = el;
-    }
-  }
-
-  /* 클릭한 사분면이 매트릭스 중앙으로 떠올라 메인으로 확대된다.
-     나머지 셋은 제자리에서 살짝 물러나며 흐려진다. */
-  function focusQuad(target) {
-    var swot = document.getElementById('s6-swot');
-    var quads = document.querySelectorAll('#s6-swot .quad');
-    for (var i = 0; i < quads.length; i++) {
-      var el = quads[i];
-      if (el === target) {
-        /* 사분면 중심 → 매트릭스 중심으로 옮길 거리 (transform 영향 없는 offset 기준) */
-        var dx = swot.clientWidth  / 2 - (el.offsetLeft + el.offsetWidth  / 2);
-        var dy = swot.clientHeight / 2 - (el.offsetTop  + el.offsetHeight / 2);
-        el.style.zIndex = 10;
-        gsap.to(el, {
-          x: dx, y: dy, scale: EXPAND_SCALE, opacity: 1,
-          backgroundColor: 'rgba(17,17,19,0.98)',
-          boxShadow: '0 0 0 1px rgba(244,244,242,0.34)',
-          duration: 0.62, ease: 'expo.out', overwrite: 'auto'
-        });
-      } else {
-        el.style.zIndex = '';
-        gsap.to(el, {
-          x: 0, y: 0, scale: 0.95, opacity: 0.2,
-          backgroundColor: 'rgba(244,244,242,0)',
-          boxShadow: '0 0 0 0 rgba(244,244,242,0)',
-          duration: 0.5, ease: 'power3.out', overwrite: 'auto'
-        });
-      }
-    }
-  }
-
-  /* 모든 사분면이 원래 자리·크기로 되돌아온다 */
-  function unfocusAll() {
-    var quads = document.querySelectorAll('#s6-swot .quad');
-    for (var i = 0; i < quads.length; i++) {
-      (function (el) {
-        gsap.to(el, {
-          x: 0, y: 0, scale: 1, opacity: 1,
-          backgroundColor: 'rgba(244,244,242,0)',
-          boxShadow: '0 0 0 0 rgba(244,244,242,0)',
-          duration: 0.58, ease: 'power3.out', overwrite: 'auto',
-          onComplete: function () { el.style.zIndex = ''; }
-        });
-      })(quads[i]);
-    }
-  }
-
-  /* ============================================================
-     앰비언트 모션 — 재생 종료 후 중심 노드가 은은히 호흡
+     앰비언트 모션 — 재생 종료 후 Campus-EMS 카드가 은은히 호흡
      ============================================================ */
   function startAmbient() {
     killAmbient();
-    var node = document.querySelector('#s6-swot .node');
-    if (node) {
-      ambient.push(gsap.to(node, {
-        boxShadow: '0 0 20px rgba(255,255,255,0.85)',
-        duration: 1.9, ease: 'sine.inOut', yoyo: true, repeat: -1
+    var emsCards = document.querySelectorAll('#s6-rows .card-ems');
+    if (emsCards.length) {
+      ambient.push(gsap.to(emsCards, {
+        '--emsglow': 0.14,
+        duration: 2.2, ease: 'sine.inOut',
+        yoyo: true, repeat: -1,
+        stagger: { each: 0.6, from: 'start' }
       }));
     }
   }
@@ -313,7 +250,6 @@ window.AiceSlide6 = (function () {
     if (played) return;
     played = true;
     build();
-    interactive = true;   // 슬라이드 진입 즉시 클릭 인터랙션 활성 (인트로 재생 중에도 가능)
     if (tl) tl.play(0);
   }
 
@@ -335,8 +271,8 @@ window.AiceSlide6 = (function () {
 
   /* ----- 공개 API ----- */
   function setup() {
-    buildQuads();
-    bindClicks();
+    buildRows();
+    buildFuture();
     build();        // 초기 상태(숨김) 적용
     observe();
   }

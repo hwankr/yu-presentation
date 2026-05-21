@@ -1,7 +1,8 @@
 /* ============================================================
    slide-2.js — 슬라이드 2 (핵심 인사이트 · "관리") 애니메이션
-   여러 에너지 키워드가 빛나다 → 전등 꺼지듯 하나하나 소등 →
-   끝까지 "관리" 하나만 남아 영화처럼 크게 피어오른다.
+   여러 에너지 키워드가 빛나다 → 전등 꺼지듯 하나하나 소등 → 텅 빈 어둠 →
+   위에서 따뜻한 스포트라이트가 내려오고, 그 빛 속에서 "관리"가
+   초점이 잡히듯(흐림→선명) 또렷이 떠오른다. (작았다 커지는 연출 아님)
    전역 객체 AiceSlide2 { init, replay } 노출
    ============================================================ */
 window.AiceSlide2 = (function () {
@@ -104,27 +105,36 @@ window.AiceSlide2 = (function () {
     var spot    = document.querySelector('#slide-2 .bg-spot');
     if (!core || !coreInk || !kwEls.length) return;
 
+    /* 스포트라이트 요소 */
+    var beam = document.getElementById('s2-lamp');    // 빛 원뿔 SVG(위에서 내려오는 빔)
+    var pool = document.getElementById('s2-pool');    // 빛 웅덩이('관리'에 닿는 빛)
+
     if (tl) tl.kill();
 
-    var SMALL = 0.18;                                  // 필드 단계 '관리' 축소 배율
-    var coreLit   = 'drop-shadow(0 0 24px rgba(255,255,255,0.5))';
-    var coreFocus = 'drop-shadow(0 0 30px rgba(255,255,255,0.9))';
-    var coreHero  = 'drop-shadow(0 0 46px rgba(255,255,255,0.6))';
+    /* '관리' 글로우 — blur + drop-shadow 한 묶음.
+       히어로 크기 그대로 두고, 흐림→선명으로 '현상'되듯 나타난다(작았다 커지지 않는다). */
+    var glowOff  = 'blur(16px) drop-shadow(0 0 26px rgba(255,236,206,0))';
+    var glowOn   = 'blur(0px) drop-shadow(0 0 72px rgba(255,242,216,0.95))';
+    var glowHero = 'blur(0px) drop-shadow(0 0 46px rgba(255,214,140,0.68))';
 
     gsap.set(coreInk, { color: 'rgba(244,244,242,1)' });
-    gsap.set(core, { xPercent: -50, yPercent: -50, scale: SMALL, filter: coreLit });
+    // '관리'는 히어로 크기 그대로 — 처음엔 안 보이고, 흐릿하게 + 살짝 아래에서 대기
+    gsap.set(core, { xPercent: -50, yPercent: -50, y: 40, opacity: 0, filter: glowOff });
+
+    // 스포트라이트 — 시작은 꺼짐(빔은 위에서부터 뻗어내릴 준비, 웅덩이는 닫힘)
+    gsap.set(beam, { xPercent: -50, transformOrigin: '50% 0%', scaleY: 0, opacity: 0 });
+    gsap.set(pool, { xPercent: -50, yPercent: -50, scale: 0.62, opacity: 0 });
 
     tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
 
-    // 1) 점등 — 키워드들과 '관리'가 하나둘 불을 켠다
+    // 1) 점등 — 키워드들이 화면 곳곳에서 하나둘 불을 켠다
     tl.from(kwEls, {
       opacity: 0, scale: 0.72, filter: OFF_GLOW,
       duration: 0.75, ease: 'power2.out',
       stagger: { each: 0.045, from: 'random' }
     }, 0);
-    tl.from(core, { opacity: 0, duration: 0.85, ease: 'power2.out' }, 0.3);
 
-    // 2) 짧은 호흡 — 모든 글자가 빛나는 상태
+    // 2) 짧은 호흡 — 모든 키워드가 빛나는 상태
     tl.addLabel('lit', 2.3);
 
     // 3) 소등 — 전등 꺼지듯 하나하나 (무작위 순서, 빨라졌다 마지막 몇 개는 느려짐)
@@ -149,17 +159,26 @@ window.AiceSlide2 = (function () {
       t += gap + (Math.random() * 0.03 - 0.015);
     }
 
-    // 어둠이 깔리며 '관리'의 빛이 강해지고, 배경 스포트라이트는 사그라든다
-    tl.to(core, { filter: coreFocus, duration: t * 0.85, ease: 'power1.in' }, 'off+=0.3');
-    tl.to(spot, { opacity: 0.32,     duration: t * 0.75, ease: 'power1.in' }, 'off');
+    // 어둠이 깔린다 — 배경 스포트라이트가 사그라들고 무대가 텅 빈다
+    tl.to(spot, { opacity: 0.24, duration: t * 0.8, ease: 'power1.in' }, 'off');
 
-    // 4) 정적 — '관리' 하나만 어둠 속에 남는다
-    tl.addLabel('alone', 'off+=' + (t + 0.45).toFixed(3));
+    // 4) 정적 — 텅 빈 어둠 (짧은 침묵)
+    tl.addLabel('dark', 'off+=' + (t + 0.7).toFixed(3));
 
-    // 5) 개화 — '관리'가 영화처럼 크게 피어오른다
-    tl.to(core, { scale: 1,        duration: 1.7, ease: 'expo.out'  }, 'alone');
-    tl.to(core, { filter: coreHero, duration: 1.8, ease: 'power2.out' }, 'alone+=0.05');
-    tl.to(spot, { opacity: 1,       duration: 1.9, ease: 'power2.out' }, 'alone+=0.1');
+    // 5) 스포트라이트 점화 — 위에서 따뜻한 빛 원뿔이 내리뻗고, 빛 웅덩이가 피어난다
+    tl.addLabel('light', 'dark');
+    tl.to(beam, { opacity: 1, duration: 0.25, ease: 'power1.out' }, 'light');
+    tl.to(beam, { scaleY: 1,  duration: 0.9,  ease: 'power3.out' }, 'light');   // 빛줄기가 내리뻗음
+    tl.to(pool, { opacity: 1, scale: 1, duration: 1.15, ease: 'power2.out' }, 'light+=0.36');
+    tl.to(spot, { opacity: 0.44, duration: 1.7, ease: 'power2.out' }, 'light+=0.2');
+
+    // 6) '관리' 현상 — 빛 속에서 초점이 잡히며 또렷이 떠오른다
+    //    히어로 크기 그대로: 흐림→선명(focus pull) + 살짝 떠오름 + 점화 섬광 → 노란빛으로 안정
+    tl.addLabel('reveal', 'light+=0.5');
+    tl.to(core, { opacity: 1,       duration: 1.4,  ease: 'power2.out'   }, 'reveal');
+    tl.to(core, { filter: glowOn,   duration: 1.15, ease: 'power2.out'   }, 'reveal');
+    tl.to(core, { y: 0,             duration: 2.1,  ease: 'power3.out'   }, 'reveal');
+    tl.to(core, { filter: glowHero, duration: 1.6,  ease: 'power2.inOut' }, 'reveal+=1.15');
 
     return tl;
   }

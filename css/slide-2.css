@@ -12,7 +12,7 @@
   position: absolute; left: 50%; top: 50%;
   width: 1200px; height: 1200px;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 64%);
+  background: radial-gradient(circle, rgba(255,230,194,0.07) 0%, transparent 64%);
 }
 
 #slide-2 .bg-vignette {
@@ -56,4 +56,33 @@
   font-size: clamp(4.5rem, 13vw, 12rem);     /* 히어로 크기 — 필드 단계엔 축소 표시 */
   letter-spacing: 0.02em;
   color: var(--text);
+}
+
+/* ----- 스포트라이트 — 위에서 내려와 "관리"를 비추는 빛 ----- */
+/* 빛 원뿔(빔) SVG — 중심 정렬·세로 신장(scaleY)은 GSAP가 제어 */
+#slide-2 .lamp {
+  position: absolute;
+  left: 50%; top: 0;
+  height: clamp(500px, 88vh, 920px);
+  width: auto;
+  z-index: 3;
+  pointer-events: none;
+  overflow: visible;
+  opacity: 0;                 /* 점화 전 — JS 타임라인이 켠다 */
+}
+
+/* 빛 웅덩이 — "관리" 위에 정확히 얹히는 노란 스포트라이트 빛(중심 정렬은 GSAP) */
+#slide-2 .lamp-pool {
+  position: absolute;
+  left: 50%; top: 50%;
+  width:  clamp(440px, 53vw, 720px);
+  height: clamp(280px, 33vw, 440px);
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%,
+              rgba(255,224,160,0.50) 0%,
+              rgba(255,216,142,0.22) 40%,
+              rgba(255,216,142,0.06) 68%,
+              rgba(255,216,142,0)    86%);
 }

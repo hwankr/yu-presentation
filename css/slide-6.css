@@ -1,7 +1,8 @@
 /* ============================================================
-   slide-6.css — 슬라이드 6 (SWOT 분석)
-   2×2 매트릭스. 강점·기회(긍정)는 솔리드, 약점·위협(부정)은
-   윤곽선 — 색이 아닌 형태 대비로 사분면을 구분한다.
+   slide-6.css — 슬라이드 6 (현장 적용 · Before → After 전환)
+   학교 시설팀 인터뷰로 검증한 활용 효과. 현재 방식은 윤곽선
+   (경직된 옛 방식), Campus-EMS 적용은 솔리드 — 색이 아닌
+   형태 대비로 전환을 보여준다. 끝까지 남는 키워드는 "운영".
    ============================================================ */
 
 #slide-6 { background: var(--bg); }
@@ -18,7 +19,7 @@
 
 #slide-6 .bg-vignette {
   position: absolute; inset: 0;
-  background: radial-gradient(circle at 50% 50%, transparent 30%, rgba(0,0,0,0.68) 100%);
+  background: radial-gradient(circle at 50% 50%, transparent 28%, rgba(0,0,0,0.66) 100%);
 }
 
 #slide-6 .particles { position: absolute; inset: 0; }
@@ -32,7 +33,7 @@
 
 /* ----- 상단 eyebrow ----- */
 #slide-6 .eyebrow {
-  position: absolute; left: 50%; top: 4%;
+  position: absolute; left: 50%; top: 5.5%;
   transform: translateX(-50%);
   font-family: 'Pretendard', sans-serif;
   font-size: 0.72rem;
@@ -43,184 +44,238 @@
 }
 
 /* ============================================================
-   SWOT 매트릭스 — 2×2 그리드
+   본문 — 인터뷰 앵커 + 전환 행 + 향후 밴드
    ============================================================ */
-#slide-6 .swot {
-  position: absolute; left: 50%; top: 49.5%;
+#slide-6 .apply {
+  position: absolute; left: 50%; top: 53.5%;
   transform: translate(-50%, -50%);
-  width: min(1180px, 92vw);
-  height: min(80vh, 680px);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-}
-
-/* 외곽 프레임 · 십자 분할선 · 중심 노드 — 애니메이션 대상, 사분면 위에 그려진다 */
-#slide-6 .swot-frame {
-  position: absolute; inset: 0;
-  z-index: 3;
-  border: 1px solid rgba(244, 244, 242, 0.16);
-  pointer-events: none;
-}
-#slide-6 .div-h {
-  position: absolute; left: 0; right: 0; top: 50%;
-  z-index: 3;
-  height: 1px;
-  background: rgba(244, 244, 242, 0.16);
-  transform: scaleX(0);
-  transform-origin: 50% 50%;
-  pointer-events: none;
-}
-#slide-6 .div-v {
-  position: absolute; top: 0; bottom: 0; left: 50%;
-  z-index: 3;
-  width: 1px;
-  background: rgba(244, 244, 242, 0.16);
-  transform: scaleY(0);
-  transform-origin: 50% 50%;
-  pointer-events: none;
-}
-#slide-6 .node {
-  position: absolute; left: 50%; top: 50%;
-  z-index: 4;
-  width: 7px; height: 7px;
-  background: var(--text);
-  transform: translate(-50%, -50%) rotate(45deg) scale(0);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.55);
-  pointer-events: none;
-}
-
-/* ----- 사분면 카드 ----- */
-#slide-6 .quad {
-  position: relative;
-  overflow: hidden;
-  padding: clamp(1.3rem, 3.6vh, 2.4rem) clamp(1.5rem, 3vw, 2.4rem);
+  width: min(1080px, 93vw);
   display: flex;
   flex-direction: column;
-  cursor: pointer;
-  box-shadow: 0 0 0 0 rgba(244, 244, 242, 0);   /* 클릭 시 테두리 링으로 트윈 */
-  will-change: transform, opacity;
+  align-items: center;
+  gap: clamp(0.95rem, 2.8vh, 1.65rem);
 }
 
-/* 큰 고스트 글자 (S/W/O/T) — 카드 우하단, 일부 잘림 */
-#slide-6 .ghost {
-  position: absolute;
-  right: -0.05em; bottom: -0.24em;
-  z-index: 1;
-  font-family: 'Fraunces', serif;
-  font-size: clamp(7rem, 15vw, 13rem);
-  font-weight: 600;
-  line-height: 1;
-  user-select: none;
-  pointer-events: none;
-  will-change: transform;
+/* ----- 인터뷰 출처 앵커 ----- */
+#slide-6 .cred {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
 }
-#slide-6 .quad[data-tone="pos"] .ghost {
-  color: rgba(244, 244, 242, 0.15);
-}
-#slide-6 .quad[data-tone="neg"] .ghost {
-  color: transparent;
-  -webkit-text-stroke: 1.5px rgba(244, 244, 242, 0.22);
-}
-
-/* ----- 사분면 헤더 — 배지 + 라벨 ----- */
-#slide-6 .quad-head {
-  position: relative; z-index: 2;
+#slide-6 .cred-line {
   display: flex;
   align-items: center;
   gap: 0.72rem;
 }
-#slide-6 .badge {
-  flex: none;
-  display: flex;
+/* 솔리드 배지 — 현장 검증의 신뢰 도장 */
+#slide-6 .cred-badge {
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 2.8rem; height: 2.8rem;
-  font-family: 'Fraunces', serif;
-  font-size: 1.58rem;
-  font-weight: 600;
-  line-height: 1;
-  will-change: transform, opacity;
-}
-/* 긍정 — 솔리드 배지 / 부정 — 윤곽선 배지 (형태 대비) */
-#slide-6 .quad[data-tone="pos"] .badge {
+  padding: 0.34rem 0.72rem;
   background: var(--text);
   color: var(--bg);
-}
-#slide-6 .quad[data-tone="neg"] .badge {
-  border: 1px solid rgba(244, 244, 242, 0.55);
-  color: var(--text);
-}
-
-#slide-6 .quad-titles {
-  display: flex;
-  flex-direction: column;
-  gap: 0.12rem;
-}
-#slide-6 .quad-ko {
   font-family: 'Pretendard', sans-serif;
-  font-size: 1.22rem;
+  font-size: 0.64rem;
   font-weight: 800;
-  letter-spacing: 0.01em;
-  line-height: 1.1;
-  color: var(--text);
+  letter-spacing: 0.14em;
+  white-space: nowrap;
 }
-#slide-6 .quad-en {
-  font-size: 0.6rem;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(244, 244, 242, 0.42);
+#slide-6 .cred-src {
+  font-family: 'Pretendard', sans-serif;
+  font-size: clamp(0.92rem, 1.4vw, 1.08rem);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--text);
+  white-space: nowrap;
+}
+#slide-6 .cred-sub {
+  font-family: 'Pretendard', sans-serif;
+  font-size: clamp(0.78rem, 1.1vw, 0.88rem);
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: rgba(244, 244, 242, 0.46);
+  text-align: center;
 }
 
-/* ----- 항목 리스트 ----- */
-#slide-6 .items {
-  position: relative; z-index: 2;
-  list-style: none;
-  margin-top: clamp(1rem, 2.6vh, 1.6rem);
+/* ============================================================
+   전환 행 — 현재(윤곽선) → 화살표 → Campus-EMS(솔리드)
+   ============================================================ */
+#slide-6 .rows {
+  width: 100%;
   display: flex;
   flex-direction: column;
-  gap: clamp(0.6rem, 1.7vh, 1rem);
+  gap: clamp(0.7rem, 2vh, 1.15rem);
 }
-#slide-6 .item {
-  position: relative;
-  padding-left: 0.95rem;
+#slide-6 .row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.46rem;
+}
+#slide-6 .row-cat {
+  font-family: 'Pretendard', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(244, 244, 242, 0.5);
   will-change: transform, opacity;
 }
-/* 항목 마커 — 긍정은 채움, 부정은 윤곽선 (형태 대비) */
-#slide-6 .item::before {
-  content: "";
-  position: absolute;
-  left: 0; top: 0.4em;
-  width: 6px; height: 6px;
+#slide-6 .row-body {
+  display: flex;
+  align-items: stretch;
+  gap: clamp(0.45rem, 1.3vw, 0.95rem);
 }
-#slide-6 .quad[data-tone="pos"] .item::before {
-  background: rgba(244, 244, 242, 0.78);
+
+/* ----- 전환 카드 (공통) ----- */
+#slide-6 .card {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+  padding: clamp(0.82rem, 2vh, 1.12rem) clamp(0.95rem, 1.7vw, 1.45rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.26rem;
+  will-change: transform, opacity;
 }
-#slide-6 .quad[data-tone="neg"] .item::before {
-  border: 1px solid rgba(244, 244, 242, 0.5);
-}
-#slide-6 .item-lead {
-  display: block;
-  font-size: 1.05rem;
+#slide-6 .card-tag {
+  font-family: 'Pretendard', sans-serif;
+  font-size: 0.58rem;
   font-weight: 700;
-  letter-spacing: 0.005em;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+#slide-6 .card-main {
+  font-family: 'Pretendard', sans-serif;
+  font-size: clamp(0.98rem, 1.5vw, 1.18rem);
+  font-weight: 700;
+  line-height: 1.32;
+  letter-spacing: 0.003em;
+}
+#slide-6 .card-sub {
+  font-family: 'Pretendard', sans-serif;
+  font-size: clamp(0.76rem, 1.05vw, 0.86rem);
+  font-weight: 400;
+  line-height: 1.4;
+  color: rgba(244, 244, 242, 0.5);
+}
+
+/* 현재 — 윤곽선 (경직된 옛 방식) */
+#slide-6 .card-now {
+  border: 1px solid rgba(244, 244, 242, 0.2);
+  background: rgba(244, 244, 242, 0.014);
+}
+#slide-6 .card-now .card-tag  { color: rgba(244, 244, 242, 0.4); }
+#slide-6 .card-now .card-main { color: rgba(244, 244, 242, 0.72); font-weight: 600; }
+
+/* Campus-EMS 적용 — 솔리드 (지능적) */
+#slide-6 .card-ems {
+  --emsglow: 0;
+  border: 1px solid rgba(244, 244, 242, 0.5);
+  background: rgba(244, 244, 242, 0.07);
+  box-shadow:
+    0 0 34px rgb(255 255 255 / var(--emsglow)),
+    inset 0 0 16px rgba(255, 255, 255, 0.04);
+}
+#slide-6 .card-ems .card-tag  { color: var(--text); }
+#slide-6 .card-ems .card-main { color: var(--text); }
+/* 코너 브래킷 — 관제 패널 톤 (슬라이드 4·5와 통일) */
+#slide-6 .card-ems::before,
+#slide-6 .card-ems::after {
+  content: ""; position: absolute;
+  width: 13px; height: 13px;
+  border: 1px solid rgba(244, 244, 242, 0.78);
+}
+#slide-6 .card-ems::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+#slide-6 .card-ems::after  { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+
+/* ----- 전환 화살표 ----- */
+#slide-6 .row-arrow {
+  flex: none;
+  width: clamp(46px, 5vw, 72px);
+  align-self: center;
+  overflow: visible;
+}
+#slide-6 .arrow-path {
+  fill: none;
+  stroke: rgba(244, 244, 242, 0.62);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ============================================================
+   향후 방향 밴드
+   ============================================================ */
+#slide-6 .future {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: clamp(0.72rem, 1.9vh, 1.05rem) clamp(0.95rem, 2vw, 1.5rem);
+  border: 1px solid rgba(244, 244, 242, 0.12);
+  background: rgba(244, 244, 242, 0.022);
+  will-change: transform, opacity;
+}
+#slide-6 .future-label {
+  font-family: 'Pretendard', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(244, 244, 242, 0.5);
+}
+#slide-6 .future-track {
+  display: flex;
+  align-items: stretch;
+  gap: clamp(0.45rem, 1.3vw, 0.95rem);
+}
+#slide-6 .fstep {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.58rem;
+  will-change: transform, opacity;
+}
+#slide-6 .fnum {
+  flex: none;
+  font-family: 'Fraunces', serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1;
+  color: rgba(244, 244, 242, 0.34);
+}
+#slide-6 .ftext {
+  display: flex;
+  flex-direction: column;
+  gap: 0.14rem;
+}
+#slide-6 .ftitle {
+  font-family: 'Pretendard', sans-serif;
+  font-size: clamp(0.84rem, 1.2vw, 0.98rem);
+  font-weight: 700;
   line-height: 1.3;
   color: var(--text);
 }
-#slide-6 .item-sub {
-  display: block;
-  margin-top: 0.1rem;
-  font-size: 0.84rem;
+#slide-6 .fsub {
+  font-family: 'Pretendard', sans-serif;
+  font-size: clamp(0.7rem, 0.95vw, 0.8rem);
   font-weight: 400;
-  letter-spacing: 0.005em;
-  line-height: 1.4;
+  line-height: 1.36;
   color: rgba(244, 244, 242, 0.46);
+}
+#slide-6 .fsep {
+  flex: none;
+  align-self: center;
+  font-size: 0.8rem;
+  color: rgba(244, 244, 242, 0.3);
+  will-change: transform, opacity;
 }
 
 /* ----- 하단 킥커 ----- */
 #slide-6 .kicker {
-  position: absolute; left: 50%; bottom: 4%;
+  position: absolute; left: 50%; bottom: 5%;
   transform: translateX(-50%);
   font-family: 'Pretendard', sans-serif;
   font-size: clamp(1.05rem, 2.1vw, 1.45rem);
@@ -236,18 +291,19 @@
 }
 
 /* ============================================================
-   세로 화면 (포트레이트) — 매트릭스 축소
+   세로 화면 (포트레이트) — 카드·단계 세로 적층
    ============================================================ */
 @media (max-aspect-ratio: 1 / 1) {
-  #slide-6 .swot { width: 94vw; height: 78vh; }
-  #slide-6 .quad { padding: 1.15rem 1.15rem; }
-  #slide-6 .ghost { font-size: 22vw; }
-  #slide-6 .badge { width: 2.05rem; height: 2.05rem; font-size: 1.18rem; }
-  #slide-6 .quad-ko { font-size: 1rem; }
-  #slide-6 .quad-en { font-size: 0.55rem; letter-spacing: 0.16em; }
-  #slide-6 .items { margin-top: 0.7rem; gap: 0.4rem; }
-  #slide-6 .item-lead { font-size: 0.84rem; }
-  #slide-6 .item-sub { font-size: 0.7rem; }
-  #slide-6 .eyebrow { top: 5%; }
-  #slide-6 .kicker { bottom: 4.5%; font-size: 1.05rem; }
+  #slide-6 .apply { width: 94vw; gap: 0.95rem; }
+  #slide-6 .cred-src { font-size: 0.86rem; }
+  #slide-6 .cred-sub { font-size: 0.74rem; }
+  #slide-6 .row-body { flex-direction: column; gap: 0.4rem; }
+  #slide-6 .row-arrow { width: 26px; transform: rotate(90deg); }
+  #slide-6 .card { padding: 0.78rem 1rem; }
+  #slide-6 .card-main { font-size: 0.94rem; }
+  #slide-6 .card-sub { font-size: 0.74rem; }
+  #slide-6 .future-track { flex-direction: column; gap: 0.55rem; }
+  #slide-6 .fsep { transform: rotate(90deg); }
+  #slide-6 .eyebrow { top: 4.5%; }
+  #slide-6 .kicker { bottom: 4%; font-size: 1.05rem; }
 }
