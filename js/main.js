@@ -39,10 +39,10 @@
     list[next].scrollIntoView({ behavior: 'smooth' });
   }
 
-  /* ----- 슬라이드 내부 단계 진행 (예: 슬라이드 4의 B-EMS→C-EMS) ----- */
+  /* ----- 슬라이드 내부 단계 진행 (예: 슬라이드 3의 B-EMS→C-EMS) ----- */
   function advanceCurrent() {
     var id = slides()[currentIndex()].id;
-    if (id === 'slide-4') return AiceSlide4.advance();
+    if (id === 'slide-3') return AiceSlide3.advance();
     return false;
   }
 

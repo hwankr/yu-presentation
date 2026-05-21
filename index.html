@@ -8,10 +8,10 @@
   <link rel="stylesheet" href="css/base.css?v=2">
   <link rel="stylesheet" href="css/slide-1.css?v=2">
   <link rel="stylesheet" href="css/slide-2.css?v=2">
-  <link rel="stylesheet" href="css/slide-3.css?v=2">
-  <link rel="stylesheet" href="css/slide-4.css?v=2">
-  <link rel="stylesheet" href="css/slide-5.css?v=2">
-  <link rel="stylesheet" href="css/slide-6.css?v=3">
+  <link rel="stylesheet" href="css/slide-3.css?v=4">
+  <link rel="stylesheet" href="css/slide-4.css?v=4">
+  <link rel="stylesheet" href="css/slide-5.css?v=4">
+  <link rel="stylesheet" href="css/slide-6.css?v=4">
   <link rel="stylesheet" href="css/slide-7.css?v=2">
 </head>
 <body>
@@ -79,7 +79,7 @@
       </div>
     </section>
 
-    <!-- ============ 슬라이드 3 — 측정 (피터 드러커 인용) ============ -->
+    <!-- ============ 슬라이드 3 — 솔루션 (B-EMS → C-EMS) ============ -->
     <section class="slide" id="slide-3">
       <div class="bg">
         <div class="bg-spot"></div>
@@ -88,55 +88,23 @@
       </div>
 
       <div class="stage">
-        <!-- 좌: 흑백 인물 사진 -->
-        <figure class="portrait">
-          <img class="portrait-img" src="peter.png" alt="피터 드러커">
-          <div class="portrait-fade" aria-hidden="true"></div>
-        </figure>
-
-        <!-- 우: 인용구 -->
-        <div class="quote">
-          <div class="attr">
-            <span class="attr-name">PETER F. DRUCKER</span>
-            <span class="attr-role">경영학의 아버지</span>
-            <span class="attr-rule" aria-hidden="true"></span>
-          </div>
-
-          <blockquote class="saying">
-            <span class="mark" aria-hidden="true">&#8220;</span>
-            <span class="line"><em class="kw" data-kw="measure">측정</em>할 수 없으면 <em class="kw" data-kw="manage">관리</em>할 수 없고,</span>
-            <span class="line"><em class="kw" data-kw="manage">관리</em>할 수 없으면 <em class="kw" data-kw="improve">개선</em>할 수 없다.</span>
-          </blockquote>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ 슬라이드 4 — 솔루션 (B-EMS → C-EMS) ============ -->
-    <section class="slide" id="slide-4">
-      <div class="bg">
-        <div class="bg-spot"></div>
-        <div class="particles" id="s4-particles"></div>
-        <div class="bg-vignette"></div>
-      </div>
-
-      <div class="stage">
         <!-- 3D 씬 — 바닥·건물·네트워크는 JS가 생성 (정사영 아이소메트릭) -->
         <!-- .tilt = 회전 고정 래퍼(rotateX→rotateY 순서 보존 → 수직 모서리 유지) -->
         <!-- .world = GSAP이 스케일·이동만 담당 (회전 안 함 → 절대 안 기울어짐) -->
         <div class="scene">
-          <div class="world" id="s4-world">
-            <div class="tilt" id="s4-tilt"></div>
+          <div class="world" id="s3-world">
+            <div class="tilt" id="s3-tilt"></div>
           </div>
         </div>
 
         <!-- HUD (3D 위 2D 레이어) -->
         <div class="hud">
-          <div class="ems" id="s4-ems" aria-label="C-EMS">
+          <div class="ems" id="s3-ems" aria-label="C-EMS">
             <span class="ems-pre"><span class="ch ch-c">C</span><span class="ch ch-b">B</span></span><span class="ems-rest">-EMS</span>
           </div>
-          <div class="bems-kicker" id="s4-bems-kicker">Building Energy Management System</div>
-          <div class="cems-sub" id="s4-cems-sub">캠퍼스 에너지 관리 시스템</div>
-          <div class="cems-stats" id="s4-cems-stats">
+          <div class="bems-kicker" id="s3-bems-kicker">Building Energy Management System</div>
+          <div class="cems-sub" id="s3-cems-sub">캠퍼스 에너지 관리 시스템</div>
+          <div class="cems-stats" id="s3-cems-stats">
             <span class="cs"><b>28</b>개 동</span>
             <span class="cs-dot"></span>
             <span class="cs"><b>4.2</b> MWh<small>/일</small></span>
@@ -145,7 +113,7 @@
           </div>
 
           <!-- 1막 — 단일 건물 관제 콘솔 -->
-          <div class="building-hud" id="s4-building-hud">
+          <div class="building-hud" id="s3-building-hud">
 
             <!-- 좌측 패널 — 실시간 부하 -->
             <div class="panel panel-left">
@@ -200,7 +168,7 @@
             </div>
 
             <!-- 건물 콜아웃 — 왼쪽 빈 공간에서 끌어나오며 설명 -->
-            <div class="callout" id="s4-callout" aria-hidden="true">
+            <div class="callout" id="s3-callout" aria-hidden="true">
               <div class="callout-label">
                 <span class="callout-eyebrow">단일 건물</span>
                 <span class="callout-title">건물 한 채를<br>통째로 관리</span>
@@ -213,23 +181,23 @@
       </div>
     </section>
 
-    <!-- ============ 슬라이드 5 — 예측 엔진 (머신러닝 작동 원리) ============ -->
-    <section class="slide" id="slide-5">
+    <!-- ============ 슬라이드 4 — 예측 엔진 (머신러닝 작동 원리) ============ -->
+    <section class="slide" id="slide-4">
       <div class="bg">
         <div class="bg-spot"></div>
-        <div class="particles" id="s5-particles"></div>
+        <div class="particles" id="s4-particles"></div>
         <div class="bg-vignette"></div>
       </div>
 
       <div class="stage">
-        <div class="eyebrow" id="s5-eyebrow">예측 엔진</div>
+        <div class="eyebrow" id="s4-eyebrow">예측 엔진</div>
 
         <!-- 수렴 파이프라인 — 입력 변수·가중치 → 예측 모델 → 사용량 카운트업 -->
-        <div class="pipeline" id="s5-pipeline">
+        <div class="pipeline" id="s4-pipeline">
 
           <!-- 좌 — 입력 변수 + 적용 가중치 -->
           <div class="inputs">
-            <div class="vgroup" id="s5-weather">
+            <div class="vgroup" id="s4-weather">
               <span class="vgroup-label">기상 데이터</span>
               <div class="chips">
                 <div class="vrow"><span class="chip">기온</span><span class="wt"></span></div>
@@ -237,7 +205,7 @@
                 <div class="vrow"><span class="chip">일사량</span><span class="wt"></span></div>
               </div>
             </div>
-            <div class="vgroup" id="s5-campus">
+            <div class="vgroup" id="s4-campus">
               <span class="vgroup-label">캠퍼스 특성 데이터</span>
               <div class="chips">
                 <div class="vrow"><span class="chip">건물 용도</span><span class="wt"></span></div>
@@ -249,26 +217,26 @@
           </div>
 
           <!-- 연결선 — JS가 가중치·모델 좌표로 path 생성 -->
-          <svg class="wires" id="s5-wires" aria-hidden="true"></svg>
+          <svg class="wires" id="s4-wires" aria-hidden="true"></svg>
 
           <!-- 중앙 — 예측 모델 (가중치 행렬 학습) -->
-          <div class="ml" id="s5-ml">
-            <div class="model" id="s5-model">
+          <div class="ml" id="s4-ml">
+            <div class="model" id="s4-model">
               <span class="model-tag">예측 모델</span>
-              <div class="matrix" id="s5-matrix"></div>
+              <div class="matrix" id="s4-matrix"></div>
               <div class="progress">
                 <span class="prog-label">모델 학습</span>
-                <span class="prog-track"><i class="prog-fill" id="s5-prog-fill"></i></span>
-                <span class="prog-num" id="s5-prog-num">0%</span>
+                <span class="prog-track"><i class="prog-fill" id="s4-prog-fill"></i></span>
+                <span class="prog-num" id="s4-prog-num">0%</span>
               </div>
             </div>
           </div>
 
           <!-- 우 — 예측 전력 사용량 (카운트업) -->
-          <div class="output" id="s5-output">
+          <div class="output" id="s4-output">
             <span class="out-label">예측 전력 사용량</span>
-            <div class="out-readout" id="s5-readout">
-              <strong class="out-num" id="s5-out-num">0.0</strong>
+            <div class="out-readout" id="s4-readout">
+              <strong class="out-num" id="s4-out-num">0.0</strong>
               <span class="out-unit">kW</span>
             </div>
             <svg class="forecast" viewBox="0 0 260 80" preserveAspectRatio="none" aria-hidden="true">
@@ -281,27 +249,27 @@
 
         </div>
 
-        <div class="kicker" id="s5-kicker">맥락을 읽는 <em class="kw">예측</em></div>
+        <div class="kicker" id="s4-kicker">맥락을 읽는 <em class="kw">예측</em></div>
       </div>
     </section>
 
-    <!-- ============ 슬라이드 6 — 현장 적용 (Before → After) ============ -->
-    <section class="slide" id="slide-6">
+    <!-- ============ 슬라이드 5 — 현장 적용 (Before → After) ============ -->
+    <section class="slide" id="slide-5">
       <div class="bg">
         <div class="bg-spot"></div>
-        <div class="particles" id="s6-particles"></div>
+        <div class="particles" id="s5-particles"></div>
         <div class="bg-vignette"></div>
       </div>
 
       <div class="stage">
-        <div class="eyebrow" id="s6-eyebrow">현장 적용</div>
+        <div class="eyebrow" id="s5-eyebrow">현장 적용</div>
 
         <!-- 본문 — 인터뷰 앵커 + 전환 행 + 향후 밴드.
-             전환 행·향후 단계 콘텐츠는 js/slide-6.js의 ROWS·FUTURE 배열로 채운다. -->
-        <div class="apply" id="s6-apply">
+             전환 행·향후 단계 콘텐츠는 js/slide-5.js의 ROWS·FUTURE 배열로 채운다. -->
+        <div class="apply" id="s5-apply">
 
           <!-- 인터뷰 출처 앵커 -->
-          <div class="cred" id="s6-cred">
+          <div class="cred" id="s5-cred">
             <div class="cred-line">
               <span class="cred-badge">현장 인터뷰</span>
               <span class="cred-src">영남대학교 시설팀 직접 인터뷰</span>
@@ -310,17 +278,49 @@
           </div>
 
           <!-- 전환 행 (현재 → Campus-EMS) -->
-          <div class="rows" id="s6-rows"></div>
+          <div class="rows" id="s5-rows"></div>
 
           <!-- 향후 방향 밴드 -->
-          <div class="future" id="s6-future">
+          <div class="future" id="s5-future">
             <span class="future-label">향후 방향</span>
-            <div class="future-track" id="s6-future-track"></div>
+            <div class="future-track" id="s5-future-track"></div>
           </div>
 
         </div>
 
-        <div class="kicker" id="s6-kicker">예측을 넘어 <em class="kw">운영</em>으로</div>
+        <div class="kicker" id="s5-kicker">예측을 넘어 <em class="kw">운영</em>으로</div>
+      </div>
+    </section>
+
+    <!-- ============ 슬라이드 6 — 측정 (피터 드러커 인용) ============ -->
+    <section class="slide" id="slide-6">
+      <div class="bg">
+        <div class="bg-spot"></div>
+        <div class="particles" id="s6-particles"></div>
+        <div class="bg-vignette"></div>
+      </div>
+
+      <div class="stage">
+        <!-- 좌: 흑백 인물 사진 -->
+        <figure class="portrait">
+          <img class="portrait-img" src="peter.png" alt="피터 드러커">
+          <div class="portrait-fade" aria-hidden="true"></div>
+        </figure>
+
+        <!-- 우: 인용구 -->
+        <div class="quote">
+          <div class="attr">
+            <span class="attr-name">PETER F. DRUCKER</span>
+            <span class="attr-role">경영학의 아버지</span>
+            <span class="attr-rule" aria-hidden="true"></span>
+          </div>
+
+          <blockquote class="saying">
+            <span class="mark" aria-hidden="true">&#8220;</span>
+            <span class="line"><em class="kw" data-kw="measure">측정</em>할 수 없으면 <em class="kw" data-kw="manage">관리</em>할 수 없고,</span>
+            <span class="line"><em class="kw" data-kw="manage">관리</em>할 수 없으면 <em class="kw" data-kw="improve">개선</em>할 수 없다.</span>
+          </blockquote>
+        </div>
       </div>
     </section>
 
@@ -336,7 +336,7 @@
         <div class="eyebrow" id="s7-eyebrow">SWOT 분석</div>
 
         <!-- 2×2 매트릭스 — 프레임·십자선·노드는 사분면 위에 그려진다.
-             사분면 콘텐츠(S·W·O·T)는 js/slide-6.js의 QUADS 배열로 채운다. -->
+             사분면 콘텐츠(S·W·O·T)는 js/slide-7.js의 QUADS 배열로 채운다. -->
         <div class="swot" id="s7-swot">
           <span class="swot-frame" aria-hidden="true"></span>
           <span class="div-h" aria-hidden="true"></span>
@@ -359,11 +359,11 @@
   <script src="vendor/gsap.min.js"></script>
   <script src="js/slide-1.js?v=2"></script>
   <script src="js/slide-2.js?v=2"></script>
-  <script src="js/slide-3.js?v=2"></script>
-  <script src="js/slide-4.js?v=2"></script>
-  <script src="js/slide-5.js?v=2"></script>
-  <script src="js/slide-6.js?v=3"></script>
+  <script src="js/slide-3.js?v=4"></script>
+  <script src="js/slide-4.js?v=4"></script>
+  <script src="js/slide-5.js?v=4"></script>
+  <script src="js/slide-6.js?v=4"></script>
   <script src="js/slide-7.js?v=2"></script>
-  <script src="js/main.js?v=2"></script>
+  <script src="js/main.js?v=3"></script>
 </body>
 </html>

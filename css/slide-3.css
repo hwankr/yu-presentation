@@ -1,23 +1,25 @@
 /* ============================================================
-   slide-3.css — 슬라이드 3 (측정 · 피터 드러커 인용)
-   좌: 흑백 인물 사진(현상) · 우: 인용구(측정→관리→개선 체인 점화)
+   slide-3.css — 슬라이드 3 (솔루션 · B-EMS → C-EMS)
+   정사영(orthographic) 아이소메트릭 — 원근 왜곡 없음 →
+   건물 수직 모서리가 항상 화면 수직선. 절대 기울어 보이지 않는다.
+   1막: 단일 건물 + 관제 콘솔 HUD → 2막: 부감 줌아웃 + 캠퍼스 C-EMS
    ============================================================ */
 
 #slide-3 { background: var(--bg); }
 
-/* ----- 배경 (슬라이드 1·2 톤 재사용 · 스포트라이트는 사진 쪽으로) ----- */
+/* ----- 배경 (슬라이드 1·2 톤 재사용) ----- */
 #slide-3 .bg { position: absolute; inset: 0; z-index: 0; }
 
 #slide-3 .bg-spot {
-  position: absolute; left: 30%; top: 50%;
-  width: 1200px; height: 1200px;
+  position: absolute; left: 50%; top: 50%;
+  width: 1300px; height: 1300px;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 64%);
+  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 64%);
 }
 
 #slide-3 .bg-vignette {
   position: absolute; inset: 0;
-  background: radial-gradient(circle at 35% 50%, transparent 32%, rgba(0,0,0,0.62) 100%);
+  background: radial-gradient(circle at 50% 50%, transparent 28%, rgba(0,0,0,0.66) 100%);
 }
 
 #slide-3 .particles { position: absolute; inset: 0; }
@@ -26,105 +28,544 @@
   border-radius: 50%; background: #fff;
 }
 
-/* ----- 무대 — 좌우 분할 ----- */
-#slide-3 .stage {
-  position: relative; z-index: 2; height: 100%;
-  display: flex; align-items: center;
-}
+/* ----- 무대 ----- */
+#slide-3 .stage { position: relative; z-index: 2; height: 100%; }
 
-/* ----- 좌: 인물 사진 ----- */
-#slide-3 .portrait {
-  position: relative;
-  flex: 0 0 42%;
-  height: 100%;
-  overflow: hidden;
-  background: #101012;            /* 사진이 없을 때 어둠으로 우아하게 대체 */
-}
-#slide-3 .portrait-img {
-  width: 100%; height: 100%;
-  object-fit: cover;
-  object-position: 50% 30%;       /* 얼굴 기준 크롭 */
-  filter: grayscale(1) brightness(0.85) contrast(1.04);
-  will-change: filter, opacity, transform;
-}
-/* 사방 비네팅 — 안쪽(우측) 가장자리를 검정으로 페이드해 분할선을 지움 */
-#slide-3 .portrait-fade {
+/* ----- 3D 씬 — 정사영(perspective 없음) ----- */
+#slide-3 .scene {
   position: absolute; inset: 0;
+  overflow: hidden;
+}
+/* .world — GSAP이 스케일·이동만 적용 (회전 없음 → 수직 모서리 보존) */
+#slide-3 .world {
+  position: absolute; left: 50%; top: 58%;
+  width: 0; height: 0;
+  transform-style: preserve-3d;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+/* .tilt — 회전 고정. rotateX 먼저(바깥) → rotateY → 수직축이 화면 수직 유지.
+   rotateX -54° = 부감(버드 아이, 위에서 내려다봄) — 윗면이 또렷이 보여 직육면체로 읽힌다.
+   (양수면 아래에서 올려다보게 되어 윗면이 backface로 숨는다.) */
+#slide-3 .tilt {
+  position: absolute; left: 0; top: 0;
+  width: 0; height: 0;
+  transform-style: preserve-3d;
+  transform: rotateX(-54deg) rotateY(-36deg);
+}
+
+/* ----- 바닥 그리드 평면 (XZ 평면에 눕힘) ----- */
+#slide-3 .floor {
+  position: absolute; left: 0; top: 0;
+  transform-style: preserve-3d;
+  transform: translate(-50%, -50%) rotateX(90deg);
+  background-image:
+    repeating-linear-gradient(to right,
+      rgba(255,255,255,0.10) 0 1px, transparent 1px 116px),
+    repeating-linear-gradient(to bottom,
+      rgba(255,255,255,0.10) 0 1px, transparent 1px 116px);
+  -webkit-mask-image: radial-gradient(ellipse 52% 52% at 50% 50%, #000 12%, transparent 78%);
+          mask-image: radial-gradient(ellipse 52% 52% at 50% 50%, #000 12%, transparent 78%);
+}
+
+/* ----- 발밑 글로우 디스크 (바닥 평면) ----- */
+#slide-3 .gglow {
+  position: absolute; left: 0; top: 0;
+  transform: translate(-50%, -50%) rotateX(90deg);
+  background: radial-gradient(ellipse 50% 50% at 50% 50%,
+    rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.06) 38%, transparent 72%);
   pointer-events: none;
-  background:
-    linear-gradient(to right,
-      rgba(10,10,11,0.55) 0%, transparent 14%,
-      transparent 58%, var(--bg) 100%),
-    linear-gradient(to bottom,
-      rgba(10,10,11,0.5) 0%, transparent 22%,
-      transparent 78%, rgba(10,10,11,0.62) 100%);
 }
 
-/* ----- 우: 인용구 ----- */
-#slide-3 .quote {
-  flex: 1 1 58%;
-  padding: 0 4vw 0 5vw;
-  max-width: 64ch;
+/* ----- 캠퍼스 네트워크 연결선 (바닥 평면) ----- */
+#slide-3 .netline {
+  position: absolute; left: 0; top: 0;
+  height: 2px;
+  transform-origin: 0% 50%;
+  background: linear-gradient(to right,
+    rgba(255,255,255,0.46) 0%, rgba(255,255,255,0.05) 100%);
+  overflow: hidden;
+}
+#slide-3 .netdot {
+  position: absolute; top: 50%; left: 0;
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 9px rgba(255,255,255,0.9);
+  transform: translate(-50%, -50%);
+}
+#slide-3 .netcore {
+  position: absolute; left: 0; top: 0;
+  width: 130px; height: 130px; border-radius: 50%;
+  transform: translate(-50%, -50%) rotateX(90deg);
+  border: 1px solid rgba(255,255,255,0.5);
+  box-shadow: 0 0 26px rgba(255,255,255,0.3);
+}
+/* 코어에서 퍼지는 펄스 링 (바닥 평면) */
+#slide-3 .corering {
+  position: absolute; left: 0; top: 0;
+  width: 400px; height: 400px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%) rotateX(90deg);
+  pointer-events: none;
 }
 
-/* 출처 라벨 — 슬라이드 1 .label 톤 */
-#slide-3 .attr { margin-bottom: 2.4rem; }
-#slide-3 .attr-name {
-  display: block;
-  font-size: 0.78rem; letter-spacing: 0.42em; text-transform: uppercase;
-  color: var(--text); font-weight: 600;
+/* ----- 아이소메트릭 빌딩 (정사각형 바닥면 + 높이 변형) ----- */
+#slide-3 .bldg {
+  position: absolute; left: 0; top: 0;
+  width: 0; height: 0;
+  transform-style: preserve-3d;
+  --edge: 0.12;
+  --glow: 0;
+  --fill: 0.13;
 }
-#slide-3 .attr-role {
-  display: block; margin-top: 0.5rem;
-  font-size: 0.86rem; letter-spacing: 0.02em;
-  color: var(--dim); font-weight: 400;
+#slide-3 .box {
+  position: absolute; left: 0; top: 0;
+  width: 0; height: 0;
+  transform-style: preserve-3d;
 }
-#slide-3 .attr-rule {
-  display: block; margin-top: 1.1rem;
-  width: 3.2rem; height: 1px;       /* JS가 0 → 이 너비로 그음 */
-  background: rgba(244, 244, 242, 0.22);
+#slide-3 .face {
+  position: absolute; left: 0; top: 0;
+  border: 1px solid rgb(255 255 255 / var(--edge));
+  background-color: rgb(244 244 242 / var(--fill));
+  box-shadow:
+    inset 0 0 22px rgb(255 255 255 / calc(var(--edge) * 0.14)),
+    0 0 18px rgb(255 255 255 / var(--glow));
+  backface-visibility: hidden;
+}
+/* 캠퍼스 건물 — 가벼운 그라데이션 창문 격자 */
+#slide-3 .face.side {
+  background-image:
+    repeating-linear-gradient(to bottom,
+      rgb(255 255 255 / calc(var(--edge) * 0.46)) 0 1px, transparent 1px 16px),
+    repeating-linear-gradient(to right,
+      transparent 0 9px,
+      rgb(255 255 255 / calc(var(--edge) * 0.36)) 9px 14px,
+      transparent 14px 22px);
+}
+#slide-3 .face.front { background-color: rgb(244 244 242 / calc(var(--fill) + 0.04)); }
+#slide-3 .face.right { background-color: rgb(244 244 242 / calc(var(--fill) * 0.70)); }
+#slide-3 .face.left,
+#slide-3 .face.back  { background-color: rgb(244 244 242 / calc(var(--fill) * 0.40)); }
+#slide-3 .face.top {
+  background-color: rgb(244 244 242 / calc(var(--fill) + 0.08));
+  background-image:
+    linear-gradient(135deg, rgb(255 255 255 / calc(var(--edge) * 0.36)) 0 1px, transparent 1px),
+    repeating-linear-gradient(to right,
+      rgb(255 255 255 / calc(var(--edge) * 0.20)) 0 1px, transparent 1px 16px);
 }
 
-/* 히어로 인용구 — 본문은 흐리게, 체인 단어만 솔리드. 각 문장은 한 줄에 들어간다. */
-#slide-3 .saying {
-  position: relative;
-  font-family: 'Pretendard', sans-serif;
-  font-weight: 500;
-  font-size: clamp(1.6rem, 2.8vw, 2.7rem);
-  line-height: 1.5;
-  letter-spacing: -0.014em;
-  color: var(--dim);
+/* ----- 히어로 건물 — DOM 창문 격자 ----- */
+#slide-3 .face.windowed {
+  background-image: none;
+  background-color: rgb(10 10 11 / 0.55);
 }
-#slide-3 .saying .line { display: block; white-space: nowrap; }
+/* 정면은 밝게, 우측면은 그늘지게 — 모서리에서 명암이 꺾여 직육면체로 읽힌다 */
+#slide-3 .face.windowed.front { filter: brightness(1.12); }
+#slide-3 .face.windowed.right { filter: brightness(0.6); }
+#slide-3 .windows {
+  position: absolute; left: 7px; right: 7px; top: 8px; bottom: 8px;
+  display: grid; gap: 4px;
+}
+#slide-3 .win {
+  background: rgb(244 244 242 / 0.06);
+}
+#slide-3 .win.lit {
+  background: rgb(244 244 242 / 0.62);
+  box-shadow: 0 0 8px rgba(255,255,255,0.34);
+}
 
-/* 큰 따옴표 — 은은한 장식 */
-#slide-3 .saying .mark {
+/* ----- 캠퍼스 건물 — 점등 창문 (소수의 밝은 셀) ----- */
+#slide-3 .clit {
   position: absolute;
-  left: -0.6em; top: -0.34em;
-  font-family: 'Fraunces', serif;
-  font-size: 2.2em; line-height: 1;
-  color: rgba(244, 244, 242, 0.1);
+  background: rgb(244 244 242 / 0.6);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
+}
+
+/* ----- 히어로 건물 — 옥상 빛 펄스 ----- */
+#slide-3 .epulse {
+  position: absolute; left: 50%; bottom: 0;
+  width: 5px;
+  transform: translateX(-50%);
+  background: linear-gradient(to top,
+    transparent 0%, rgba(255,255,255,0.95) 50%, transparent 100%);
+  box-shadow: 0 0 12px rgba(255,255,255,0.7);
   pointer-events: none;
 }
 
-/* 체인 키워드 — 측정 · 관리 · 개선 (JS가 흐림 → 솔리드+글로우 점화) */
-#slide-3 .saying .kw {
-  display: inline-block;            /* scale 펄스를 위해 */
-  font-style: normal;
-  font-weight: 700;
+/* ============================================================
+   HUD — 3D 위 2D 레이어
+   ============================================================ */
+#slide-3 .hud {
+  position: absolute; inset: 0; z-index: 3;
+  pointer-events: none;
   color: var(--text);
 }
 
-/* ----- 좁은/세로 화면 폴백 — 위아래로 쌓음 ----- */
+/* ----- 헤드라인 B-EMS / C-EMS ----- */
+#slide-3 .ems {
+  position: absolute; left: 50%; top: 5.5%;
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: clamp(3rem, 7.4vw, 6rem);
+  line-height: 1;
+  color: var(--text);
+  white-space: nowrap;
+}
+#slide-3 .ems-pre { position: relative; display: inline-block; }
+#slide-3 .ems-pre .ch { display: inline-block; }
+#slide-3 .ems-pre .ch-b {
+  position: absolute; left: 0; top: 0;
+  width: 100%; text-align: center;
+}
+
+/* ----- 1막 킥커 ----- */
+#slide-3 .bems-kicker {
+  position: absolute; left: 50%; top: 16.5%;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgba(244, 244, 242, 0.46);
+  white-space: nowrap;
+}
+
+/* ----- 2막 부제 + 집계 스트립 ----- */
+#slide-3 .cems-sub {
+  position: absolute; left: 50%; top: 21.5%;
+  transform: translateX(-50%);
+  font-family: 'Pretendard', sans-serif;
+  font-weight: 500;
+  font-size: clamp(0.95rem, 2vw, 1.3rem);
+  letter-spacing: 0.04em;
+  color: var(--dim);
+  white-space: nowrap;
+}
+#slide-3 .cems-stats {
+  position: absolute; left: 50%; top: 26.5%;
+  transform: translateX(-50%);
+  display: flex; align-items: center; gap: 0.9rem;
+  white-space: nowrap;
+}
+#slide-3 .cems-stats .cs {
+  display: flex; align-items: baseline; gap: 0.32rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+  color: rgba(244, 244, 242, 0.5);
+}
+#slide-3 .cems-stats .cs b {
+  font-size: 1.16rem;
+  font-weight: 760;
+  color: var(--text);
+}
+#slide-3 .cems-stats .cs small { font-size: 0.72rem; }
+#slide-3 .cems-stats .cs-dot {
+  width: 3px; height: 3px; border-radius: 50%;
+  background: rgba(244, 244, 242, 0.34);
+}
+#slide-3 .cems-stats .cs-live i {
+  display: inline-block;
+  width: 6px; height: 6px; margin-right: 0.4rem;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px rgba(255,255,255,0.9);
+}
+
+/* ============================================================
+   1막 — 단일 건물 관제 콘솔
+   ============================================================ */
+#slide-3 .building-hud { position: absolute; inset: 0; }
+
+/* ----- 관제 패널 (좌 · 우) ----- */
+#slide-3 .panel {
+  position: absolute; top: 50%;
+  width: clamp(13.5rem, 22.5vw, 19.5rem);
+  padding: 1.15rem 1.25rem 1.3rem;
+  transform: translateY(-50%);
+  background: rgba(9, 9, 10, 0.62);
+  border: 1px solid rgba(244, 244, 242, 0.14);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+#slide-3 .panel-left  { left: 3.6vw; }
+#slide-3 .panel-right { right: 3.6vw; }
+
+/* 코너 브래킷 — 관제 화면 프레임 */
+#slide-3 .panel::before,
+#slide-3 .panel::after {
+  content: ""; position: absolute;
+  width: 15px; height: 15px;
+  border: 1px solid rgba(244, 244, 242, 0.72);
+}
+#slide-3 .panel::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+#slide-3 .panel::after  { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+
+#slide-3 .panel-tag {
+  display: block;
+  margin-bottom: 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid rgba(244, 244, 242, 0.12);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.26em;
+  color: rgba(244, 244, 242, 0.46);
+}
+
+/* ----- 핵심 수치 — 라벨 위 / 큰 숫자 아래 (대시보드 KPI 스타일) ----- */
+#slide-3 .stat { margin-bottom: 0.82rem; }
+#slide-3 .stat-label {
+  display: block;
+  margin-bottom: 0.18rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.02em;
+  color: rgba(244, 244, 242, 0.5);
+}
+#slide-3 .stat-val {
+  display: block;
+  font-weight: 760;
+  font-size: 1.3rem;
+  line-height: 1;
+  letter-spacing: 0;
+  color: var(--text);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+#slide-3 .stat-hero .stat-val {
+  font-size: clamp(1.7rem, 2.6vw, 2.25rem);
+}
+#slide-3 .stat-hero { margin-bottom: 1rem; }
+
+/* ----- 부하 곡선 스파크라인 ----- */
+#slide-3 .spark { margin-top: 1.05rem; }
+#slide-3 .spark-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 0.5rem;
+}
+#slide-3 .spark-label {
+  font-size: 0.7rem; letter-spacing: 0.04em;
+  color: rgba(244, 244, 242, 0.5);
+}
+#slide-3 .spark-peak-label {
+  font-size: 0.66rem; font-weight: 700;
+  letter-spacing: 0.04em;
+  color: rgba(244, 244, 242, 0.78);
+}
+#slide-3 .spark-svg {
+  display: block; width: 100%; height: 58px;
+}
+#slide-3 .spark-area { fill: rgba(244, 244, 242, 0.08); stroke: none; }
+#slide-3 .spark-line {
+  fill: none;
+  stroke: rgba(244, 244, 242, 0.92);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#slide-3 .spark-dot {
+  fill: #fff;
+  filter: drop-shadow(0 0 5px rgba(255,255,255,0.85));
+}
+
+/* ----- 층별 부하 ----- */
+#slide-3 .load { margin-top: 0.1rem; }
+#slide-3 .load-row {
+  display: grid;
+  grid-template-columns: 2rem 1fr 3.1rem;
+  align-items: center;
+  gap: 0.7rem;
+  margin: 0.62rem 0;
+}
+#slide-3 .load-fl {
+  font-size: 0.78rem; font-weight: 600;
+  color: rgba(244, 244, 242, 0.62);
+}
+#slide-3 .load-track {
+  position: relative;
+  height: 9px;
+  background: rgba(244, 244, 242, 0.09);
+  border: 1px solid rgba(244, 244, 242, 0.08);
+}
+#slide-3 .load-track i {
+  display: block; position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: var(--w);
+  transform-origin: 0% 50%;
+  background: linear-gradient(to right,
+    rgba(244, 244, 242, 0.5), rgba(244, 244, 242, 0.95));
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+}
+#slide-3 .load-kw {
+  font-size: 0.82rem; font-weight: 760;
+  text-align: right;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+#slide-3 .load-kw small {
+  font-size: 0.6rem; font-weight: 600;
+  margin-left: 0.12rem;
+  color: rgba(244, 244, 242, 0.5);
+}
+
+/* ----- 효율 게이지 ----- */
+#slide-3 .gauge {
+  position: relative;
+  margin-top: 1.05rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid rgba(244, 244, 242, 0.12);
+  text-align: center;
+}
+#slide-3 .gauge-svg { display: block; width: 100%; height: 64px; }
+#slide-3 .gauge-track {
+  fill: none; stroke: rgba(244, 244, 242, 0.14);
+  stroke-width: 6; stroke-linecap: round;
+}
+#slide-3 .gauge-fill {
+  fill: none; stroke: #f4f4f2;
+  stroke-width: 6; stroke-linecap: round;
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.55));
+}
+#slide-3 .gauge-read {
+  position: absolute; left: 0; right: 0; top: 2.55rem;
+  display: flex; align-items: baseline; justify-content: center;
+}
+#slide-3 .gauge-num {
+  font-size: 1.7rem; font-weight: 800;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+#slide-3 .gauge-unit {
+  font-size: 0.85rem; font-weight: 700;
+  margin-left: 0.1rem;
+  color: rgba(244, 244, 242, 0.6);
+}
+#slide-3 .gauge-cap {
+  display: block;
+  margin-top: 0.05rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: rgba(244, 244, 242, 0.46);
+}
+
+/* ----- 건물 프로필 (하단 중앙) ----- */
+#slide-3 .building-profile {
+  position: absolute; left: 50%; bottom: 4%;
+  width: min(25rem, 56vw);
+  padding: 0.95rem 1.3rem;
+  transform: translateX(-50%);
+  text-align: center;
+  background: rgba(9, 9, 10, 0.62);
+  border: 1px solid rgba(244, 244, 242, 0.14);
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+#slide-3 .building-profile::before,
+#slide-3 .building-profile::after {
+  content: ""; position: absolute;
+  width: 15px; height: 15px;
+  border: 1px solid rgba(244, 244, 242, 0.72);
+}
+#slide-3 .building-profile::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+#slide-3 .building-profile::after  { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+#slide-3 .building-profile .eyebrow {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+  color: rgba(244, 244, 242, 0.46);
+}
+#slide-3 .building-profile strong {
+  display: block;
+  font-size: clamp(1.2rem, 2.1vw, 1.7rem);
+  font-weight: 780;
+}
+#slide-3 .building-profile .profile-sub {
+  display: block;
+  margin-top: 0.32rem;
+  font-size: 0.86rem;
+  color: var(--dim);
+}
+
+/* ----- 건물 콜아웃 (1막 — 빌딩 왼쪽 빈 공간에서 끌어나옴) ----- */
+#slide-3 .callout {
+  position: absolute; inset: 0;
+  pointer-events: none;
+}
+#slide-3 .callout-label {
+  position: absolute; left: 26.6%; top: 40%;
+  width: 11%;
+  transform: translateY(-50%);
+  text-align: right;
+}
+#slide-3 .callout-eyebrow {
+  display: block;
+  margin-bottom: 0.26rem;
+  font-size: 0.58rem; font-weight: 700;
+  letter-spacing: 0.2em;
+  color: rgba(244, 244, 242, 0.46);
+}
+#slide-3 .callout-title {
+  display: block;
+  font-size: 0.83rem; font-weight: 600;
+  line-height: 1.34;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+#slide-3 .callout-line {
+  position: absolute; top: 40%; left: 37.8%;
+  width: 3.7%; height: 1.5px;
+  margin-top: -0.75px;
+  background: linear-gradient(to left,
+    rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.28));
+}
+#slide-3 .callout-dot {
+  position: absolute; left: 41.5%; top: 40%;
+  width: 9px; height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 11px rgba(255, 255, 255, 0.9);
+}
+
+/* ============================================================
+   세로 화면 (포트레이트) — 패널을 하단으로, 겹침 방지
+   ============================================================ */
 @media (max-aspect-ratio: 1 / 1) {
-  #slide-3 .stage { flex-direction: column; }
-  #slide-3 .portrait { flex: 0 0 42%; width: 100%; }
-  #slide-3 .portrait-fade {
-    background:
-      linear-gradient(to bottom,
-        rgba(10,10,11,0.5) 0%, transparent 20%,
-        transparent 56%, var(--bg) 100%);
+  #slide-3 .world { top: 40%; }
+  #slide-3 .ems { top: 7%; }
+  #slide-3 .bems-kicker { top: 14.4%; font-size: 0.6rem; letter-spacing: 0.22em; }
+  #slide-3 .cems-sub { top: 15.5%; }
+  #slide-3 .cems-stats { top: 20.5%; gap: 0.6rem; }
+
+  #slide-3 .panel {
+    top: auto; bottom: 16.5%;
+    width: 46vw;
+    padding: 0.8rem 0.85rem 0.9rem;
+    transform: none;
   }
-  #slide-3 .quote { flex: 0 0 auto; padding: 2.2rem 8vw; }
-  #slide-3 .attr { margin-bottom: 1.4rem; }
+  #slide-3 .panel-left  { left: 2.5vw; }
+  #slide-3 .panel-right { right: 2.5vw; }
+  #slide-3 .panel-tag { margin-bottom: 0.7rem; padding-bottom: 0.45rem; }
+  #slide-3 .stat { margin-bottom: 0.6rem; }
+  #slide-3 .stat-val { font-size: 1.1rem; }
+  #slide-3 .stat-hero .stat-val { font-size: 1.4rem; }
+  #slide-3 .stat-hero { margin-bottom: 0.7rem; }
+  #slide-3 .spark { margin-top: 0.7rem; }
+  #slide-3 .spark-svg { height: 44px; }
+  #slide-3 .gauge { margin-top: 0.7rem; padding-top: 0.65rem; }
+  #slide-3 .gauge-svg { height: 52px; }
+  #slide-3 .gauge-read { top: 2rem; }
+  #slide-3 .gauge-num { font-size: 1.4rem; }
+
+  #slide-3 .building-profile {
+    bottom: 3.5%;
+    width: 84vw;
+    padding: 0.7rem 1rem;
+  }
+
+  /* 콜아웃 — 세로 화면: 빌딩 왼쪽 빈 공간으로 재배치 */
+  #slide-3 .callout-label { left: 4%; width: 26%; top: 29%; }
+  #slide-3 .callout-line  { left: 30.5%; width: 4.5%; top: 29%; }
+  #slide-3 .callout-dot   { left: 35%; top: 29%; }
 }

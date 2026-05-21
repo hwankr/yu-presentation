@@ -1,43 +1,57 @@
 /* ============================================================
-   slide-4.js — 슬라이드 4 (솔루션 · B-EMS → C-EMS) 애니메이션
-   정사영(orthographic) 아이소메트릭 — perspective 없음 →
-   건물 수직 모서리가 항상 화면 수직선. 절대 기울어 보이지 않는다.
-   1막: 단일 건물(B-EMS) + 관제 콘솔 HUD가 자동 등장.
-   발표자가 스페이스바(또는 →·PageDown)를 누르면 →
-   2막: 부감 줌아웃, 캠퍼스 군집 + 네트워크 연결선이 펼쳐지고 "C-EMS" 각인.
-   전역 객체 AiceSlide4 { init, replay, advance } 노출
+   slide-4.js — 슬라이드 4 (예측 엔진 · 머신러닝 작동 원리)
+   가로 3단 수렴 파이프라인이 자동 재생된다.
+   입력 변수가 점등 → 빛 점이 연결선을 타고 모델로 흐르며 각 입력에
+   가중치가 적용됨 → 예측 모델의 가중치 행렬이 churn 끝에 한 칸씩
+   lock-in 되며 학습 100% 완성 → 그 순간 예측 전력 사용량이
+   카운트업으로 차오른다. 끝까지 남는 키워드는 "예측".
+   전역 객체 AiceSlide4 { init, replay } 노출
    ============================================================ */
 window.AiceSlide4 = (function () {
   'use strict';
 
-  /* ----- 카메라 (정사영 아이소메트릭) -----
-     회전(rotateX 26° → rotateY -25°)은 css `.tilt` 가 고정으로 갖는다.
-     GSAP은 `.world` 에 스케일·세로이동만 적용 → 수직 모서리가 절대 안 기운다. */
-  var ACT1_SCALE = 1.42, ACT1_Y = 56;
-  var ACT2_SCALE = 0.6, ACT2_Y = 64;
+  /* ----- 타임라인 비트 (초) ----- */
+  var CONV        = 2.6;     // 수렴 시작 — 입력 → 모델
+  var CHURN_START = 3.2;     // 가중치 행렬 churn 시작
+  var LOCK_START  = 4.3;     // 가중치 lock-in 스윕 시작
+  var LOCK_GAP    = 0.058;   // 셀별 lock 간격
+  var LOCK_DUR    = 1.46;    // 학습 진행 막대가 차는 시간
+  var COUNT       = 6.0;     // 예측 사용량 카운트업
+  var KICK        = 8.0;     // 마무리 킥커
 
-  /* ----- 건물 ----- */
-  var HERO_W = 116, HERO_D = 116, HERO_H = 310;
-  var EDGE_DIM = 0.12, EDGE_LIT = 0.42, EDGE_HERO = 0.6;
+  var COMPLETE    = LOCK_START + LOCK_DUR;          // 모델 완성 시점
+  var CHURN_DUR   = COMPLETE - CHURN_START + 0.15;  // churn 지속
 
-  var tlIntro, tlReveal;
-  var played = false, revealed = false;
-  var heroBlink, heroPulseTw, winFlickerTw, shimmer, netFlowTw, coreRingTws = [];
-  var heroBldg, campusBldgs = [], allBldgs = [];
-  var floorEl, gglowEl, netCoreEl, netLines = [], netDots = [];
-  var campusLights = [], coreRings = [];
+  var CHIP_GLOW = 'drop-shadow(0 0 7px rgba(255,255,255,0.22))';
+  var CHIP_OFF  = 'drop-shadow(0 0 0px rgba(255,255,255,0))';
+
+  /* 입력 변수별 적용 가중치 (편집 가능 — 칩 DOM 순서와 일치) */
+  var INPUT_WEIGHTS = [0.86, 0.43, 0.71,          // 기온·습도·일사량
+                       0.78, 0.92, 0.59, 0.89];   // 건물용도·시험기간·축제·과거전력패턴
+
+  var MATRIX_N = 24;         // 가중치 행렬 셀 수 (6×4)
+  var OUT_TARGET = 142.8;    // 예측 전력 사용량 kW (편집 가능)
+
+  var tl;
+  var played = false;
+  var inputWires = [];       // [{path, dot, sx, sy, ex, ey, len}]
+  var outputWire = null;
+  var matrixCells = [];      // [{el, val, locked}]
+  var churnCount = 0;
+  var ambient = [];
 
   /* ============================================================
-     입자 배경
+     배경 입자
      ============================================================ */
   function makeParticles() {
     var pc = document.getElementById('s4-particles');
     if (!pc) return;
-    for (var i = 0; i < 16; i++) {
+    pc.innerHTML = '';
+    for (var i = 0; i < 14; i++) {
       var p = document.createElement('div');
       p.className = 'particle';
       p.style.left = Math.random() * 100 + '%';
-      p.style.top = Math.random() * 100 + '%';
+      p.style.top  = Math.random() * 100 + '%';
       pc.appendChild(p);
       gsap.set(p, { opacity: 0.05 + Math.random() * 0.16 });
       gsap.to(p, {
@@ -51,7 +65,371 @@ window.AiceSlide4 = (function () {
     }
   }
 
-  function rnd(a, b) { return a + Math.random() * (b - a); }
+  var SVGNS = 'http://www.w3.org/2000/svg';
+
+  /* 가중치 표기 — 부호 + 소수 2자리 (앞 0 생략): "+.62" / "-.41" */
+  function fmtW(v) {
+    var s = v < 0 ? '-' : '+';
+    return s + Math.abs(v).toFixed(2).slice(1);
+  }
+  function randW() { return fmtW(Math.random() * 1.8 - 0.9); }
+
+  /* ============================================================
+     예측 모델 — 가중치 행렬 셀
+     ============================================================ */
+  function buildMatrix() {
+    var mx = document.getElementById('s4-matrix');
+    if (!mx) return;
+    mx.innerHTML = '';
+    matrixCells = [];
+    for (var i = 0; i < MATRIX_N; i++) {
+      var c = document.createElement('span');
+      c.className = 'wcell';
+      mx.appendChild(c);
+      matrixCells.push({ el: c, val: randW(), locked: false });
+    }
+  }
+
+  /* ============================================================
+     연결선 — 가중치·모델·출력의 화면 좌표로 직선 path 생성
+     ============================================================ */
+  function buildWires() {
+    var pipe   = document.getElementById('s4-pipeline');
+    var svg    = document.getElementById('s4-wires');
+    var model  = document.getElementById('s4-model');
+    var rdout  = document.getElementById('s4-readout');
+    var inputs = document.querySelector('#slide-4 .inputs');
+    if (!pipe || !svg || !model || !rdout || !inputs) return;
+
+    var wts = document.querySelectorAll('#slide-4 .wt');
+    var pr = pipe.getBoundingClientRect();
+    if (pr.width < 10) return;
+
+    svg.innerHTML = '';
+    svg.setAttribute('viewBox', '0 0 ' + pr.width + ' ' + pr.height);
+    inputWires = [];
+    outputWire = null;
+
+    var mr = model.getBoundingClientRect();
+    var mCy = mr.top - pr.top + mr.height / 2;
+
+    /* 입력 가중치 → 모델 왼쪽 수렴점. 선은 입력 그룹 박스의 오른쪽 모서리에서 출발한다. */
+    var inX = inputs.getBoundingClientRect().right - pr.left;
+    var ex = mr.left - pr.left + 4, ey = mCy;
+    var i, paths = [], dots = [];
+    for (i = 0; i < wts.length; i++) {
+      var w = wts[i].getBoundingClientRect();
+      var sx = inX;
+      var sy = w.top - pr.top + w.height / 2;
+      var wire = makeWire(sx, sy, ex, ey);
+      paths.push(wire.path); dots.push(wire.dot);
+      inputWires.push(wire);
+    }
+
+    /* 모델 오른쪽 → 예측 사용량 readout */
+    var rr = rdout.getBoundingClientRect();
+    var ox = rr.left - pr.left;
+    var oy = rr.top - pr.top + rr.height / 2;
+    outputWire = makeWire(mr.right - pr.left - 4, mCy, ox, oy);
+
+    for (i = 0; i < paths.length; i++) svg.appendChild(paths[i]);
+    svg.appendChild(outputWire.path);
+    for (i = 0; i < dots.length; i++) svg.appendChild(dots[i]);
+    svg.appendChild(outputWire.dot);
+  }
+
+  function makeWire(sx, sy, ex, ey) {
+    var path = document.createElementNS(SVGNS, 'path');
+    path.setAttribute('class', 'wire');
+    path.setAttribute('d', 'M' + sx.toFixed(1) + ',' + sy.toFixed(1) +
+                            ' L' + ex.toFixed(1) + ',' + ey.toFixed(1));
+    var dot = document.createElementNS(SVGNS, 'circle');
+    dot.setAttribute('class', 'wiredot');
+    dot.setAttribute('r', '3.2');
+    dot.setAttribute('cx', sx.toFixed(1));
+    dot.setAttribute('cy', sy.toFixed(1));
+    return {
+      path: path, dot: dot,
+      sx: sx, sy: sy, ex: ex, ey: ey,
+      len: Math.sqrt((ex - sx) * (ex - sx) + (ey - sy) * (ey - sy))
+    };
+  }
+
+  /* ============================================================
+     예측 곡선 — 적정 범위 밴드 + 예측 라인
+     ============================================================ */
+  function buildForecast() {
+    /* 하루 전력 예측값 0..1 (편집 가능) */
+    var m = [0.30, 0.27, 0.26, 0.30, 0.40, 0.54, 0.66, 0.74,
+             0.80, 0.82, 0.78, 0.70, 0.66, 0.69, 0.64, 0.60];
+    var margin = 0.15;
+    var W = 260, H = 80, pad = 10;
+    var iw = W - pad * 2, ih = H - pad * 2, n = m.length;
+
+    function X(i) { return pad + (i / (n - 1)) * iw; }
+    function Y(v) { return pad + (1 - Math.max(0, Math.min(1, v))) * ih; }
+
+    var line = 'M' + X(0).toFixed(1) + ',' + Y(m[0]).toFixed(1);
+    var up = 'M' + X(0).toFixed(1) + ',' + Y(m[0] + margin).toFixed(1);
+    var i;
+    for (i = 1; i < n; i++) {
+      line += ' L' + X(i).toFixed(1) + ',' + Y(m[i]).toFixed(1);
+      up   += ' L' + X(i).toFixed(1) + ',' + Y(m[i] + margin).toFixed(1);
+    }
+    var band = up;
+    for (i = n - 1; i >= 0; i--) {
+      band += ' L' + X(i).toFixed(1) + ',' + Y(m[i] - margin).toFixed(1);
+    }
+    band += ' Z';
+    return { line: line, band: band, end: [X(n - 1), Y(m[n - 1])] };
+  }
+
+  /* ============================================================
+     타임라인
+     ============================================================ */
+  function build() {
+    var eyebrow  = document.getElementById('s4-eyebrow');
+    var spot     = document.querySelector('#slide-4 .bg-spot');
+    var model    = document.getElementById('s4-model');
+    var matrix   = document.getElementById('s4-matrix');
+    var progFill = document.getElementById('s4-prog-fill');
+    var progNum  = document.getElementById('s4-prog-num');
+    var weatherBox = document.getElementById('s4-weather');
+    var campusBox  = document.getElementById('s4-campus');
+    var wChips   = document.querySelectorAll('#s4-weather .chip');
+    var cChips   = document.querySelectorAll('#s4-campus .chip');
+    var allChips = document.querySelectorAll('#slide-4 .chip');
+    var wtEls    = document.querySelectorAll('#slide-4 .wt');
+    var outLabel = document.querySelector('#slide-4 .out-label');
+    var readout  = document.getElementById('s4-readout');
+    var outNum   = document.getElementById('s4-out-num');
+    var outCap   = document.querySelector('#slide-4 .out-cap');
+    var fcBand   = document.querySelector('#slide-4 .fc-band');
+    var fcLine   = document.querySelector('#slide-4 .fc-line');
+    var fcDot    = document.querySelector('#slide-4 .fc-dot');
+    var kicker   = document.getElementById('s4-kicker');
+    var kw       = document.querySelector('#slide-4 .kicker .kw');
+    if (!model || !matrix || !inputWires.length || !outputWire) return;
+
+    if (tl) tl.kill();
+    killAmbient();
+    churnCount = 0;
+
+    /* 예측 곡선 path 주입 + 길이 측정 */
+    var fc = buildForecast();
+    fcBand.setAttribute('d', fc.band);
+    fcLine.setAttribute('d', fc.line);
+    fcDot.setAttribute('cx', fc.end[0].toFixed(1));
+    fcDot.setAttribute('cy', fc.end[1].toFixed(1));
+    var flen = fcLine.getTotalLength ? fcLine.getTotalLength() : 320;
+
+    /* 행렬 셀 초기화 — 빈 칸·잠금 해제 */
+    var i, cellEls = [];
+    for (i = 0; i < matrixCells.length; i++) {
+      matrixCells[i].locked = false;
+      matrixCells[i].el.textContent = '';
+      matrixCells[i].el.classList.remove('locked');
+      cellEls.push(matrixCells[i].el);
+    }
+
+    var inPaths = [];
+    for (i = 0; i < inputWires.length; i++) inPaths.push(inputWires[i].path);
+
+    /* ----- 초기 상태 ----- */
+    gsap.set(spot, { opacity: 0.55 });
+    gsap.set(eyebrow, { opacity: 0, y: -8 });
+    gsap.set([weatherBox, campusBox], { opacity: 0, y: 10 });
+    gsap.set(allChips, { opacity: 0, scale: 0.9, filter: CHIP_OFF });
+    gsap.set(wtEls, { opacity: 0, x: -6 });
+    gsap.set(model, { opacity: 0, '--mglow': 0, borderColor: 'rgba(244,244,242,0.16)' });
+    gsap.set(matrix, { opacity: 0 });
+    gsap.set(progFill, { scaleX: 0 });
+    gsap.set(progNum, { color: 'rgba(244,244,242,0.55)' });
+
+    for (i = 0; i < inputWires.length; i++) {
+      var w = inputWires[i];
+      gsap.set(w.path, { strokeDasharray: w.len, strokeDashoffset: w.len });
+      gsap.set(w.dot, { opacity: 0, attr: { cx: w.sx, cy: w.sy } });
+    }
+    gsap.set(outputWire.path, {
+      strokeDasharray: outputWire.len, strokeDashoffset: outputWire.len
+    });
+    gsap.set(outputWire.dot, { opacity: 0, attr: { cx: outputWire.sx, cy: outputWire.sy } });
+
+    gsap.set(outLabel, { opacity: 0, y: 6 });
+    gsap.set(readout, { opacity: 0 });
+    outNum.textContent = '0.0';
+    gsap.set(outCap, { opacity: 0 });
+    gsap.set(fcBand, { opacity: 0 });
+    gsap.set(fcLine, { strokeDasharray: flen, strokeDashoffset: flen });
+    gsap.set(fcDot, { opacity: 0, scale: 0, transformOrigin: '50% 50%' });
+    gsap.set(kicker, { opacity: 0, y: 10 });
+    gsap.set(kw, { filter: CHIP_OFF });
+
+    /* ----- 타임라인 ----- */
+    tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
+
+    /* 1) eyebrow */
+    tl.to(eyebrow, { opacity: 1, y: 0, duration: 0.7 }, 0);
+
+    /* 모델 패널 프레임 등장 (빈 모델이 먼저 떠오른다) */
+    tl.to(model, { opacity: 1, duration: 0.85, ease: 'power2.out' }, 0.5);
+
+    /* 2) 기상 데이터 — 그룹 박스가 먼저 떠오르고 → 칩이 점등 */
+    tl.to(weatherBox, { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' }, 0.55);
+    tl.to(wChips, {
+      opacity: 1, scale: 1, filter: CHIP_GLOW,
+      duration: 0.5, ease: 'power2.out', stagger: 0.1
+    }, 0.8);
+
+    /* 3) 캠퍼스 특성 데이터 — 그룹 박스 → 칩 점등 */
+    tl.to(campusBox, { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' }, 1.3);
+    tl.to(cChips, {
+      opacity: 1, scale: 1, filter: CHIP_GLOW,
+      duration: 0.5, ease: 'power2.out', stagger: 0.09
+    }, 1.55);
+
+    /* 4) 수렴 — 연결선 드로잉 + 빛 점이 모델로, 입력별 가중치 적용 */
+    tl.to(inPaths, {
+      strokeDashoffset: 0, duration: 0.62, ease: 'power2.out', stagger: 0.055
+    }, CONV);
+    for (i = 0; i < inputWires.length; i++) {
+      var dotPos = CONV + 0.12 + i * 0.075;
+      addWireDot(tl, inputWires[i], dotPos, 0.8, 'power1.in');
+      addInputWeight(tl, wtEls[i], INPUT_WEIGHTS[i], dotPos + 0.74);
+    }
+
+    /* 5) 학습 — 가중치 행렬 churn → 한 칸씩 lock-in */
+    tl.to(matrix, { opacity: 1, duration: 0.4 }, CHURN_START - 0.1);
+    var churnProxy = { v: 0 };
+    tl.to(churnProxy, {
+      v: 1, duration: CHURN_DUR, ease: 'none', onUpdate: churnTick
+    }, CHURN_START);
+    for (i = 0; i < matrixCells.length; i++) {
+      tl.call(lockAt(i), null, LOCK_START + i * LOCK_GAP);
+    }
+    /* 학습 진행 막대 0 → 100% */
+    tl.to(progFill, { scaleX: 1, duration: LOCK_DUR, ease: 'none' }, LOCK_START);
+    var progProxy = { v: 0 };
+    tl.to(progProxy, {
+      v: 100, duration: LOCK_DUR, ease: 'none',
+      onUpdate: function () { progNum.textContent = Math.round(progProxy.v) + '%'; }
+    }, LOCK_START);
+
+    /* 6) 모델 완성 — 패널 글로우 + 진행 수치 점등 */
+    tl.to(model, {
+      '--mglow': 0.42, borderColor: 'rgba(244,244,242,0.42)',
+      duration: 0.6, ease: 'power2.out'
+    }, COMPLETE);
+    tl.to(progNum, { color: '#ffffff', duration: 0.4 }, COMPLETE);
+    tl.call(startAmbient, null, COMPLETE + 0.35);
+
+    /* 7) 예측 출력 — 모델 완성에 따라 사용량이 카운트업 */
+    tl.to(outputWire.path, {
+      strokeDashoffset: 0, duration: 0.45, ease: 'power2.out'
+    }, COMPLETE + 0.05);
+    addWireDot(tl, outputWire, COMPLETE + 0.1, 0.5, 'power1.inOut');
+    tl.to(outLabel, { opacity: 1, y: 0, duration: 0.55 }, COUNT - 0.35);
+    tl.to(readout, { opacity: 1, duration: 0.4 }, COUNT - 0.1);
+    addCount(tl, outNum, COUNT, OUT_TARGET, 1, 1.7);
+    tl.to(fcBand, { opacity: 1, duration: 0.6 }, COUNT + 0.2);
+    tl.to(fcLine, { strokeDashoffset: 0, duration: 1.3, ease: 'power2.out' }, COUNT + 0.25);
+    tl.to(fcDot, {
+      opacity: 1, scale: 1, duration: 0.55, ease: 'power3.out'
+    }, COUNT + 1.5);
+    tl.to(outCap, { opacity: 1, duration: 0.55 }, COUNT + 1.4);
+
+    /* 8) 마무리 킥커 — "예측" 솔리드 강조 */
+    tl.to(kicker, { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' }, KICK);
+    tl.to(kw, {
+      filter: 'drop-shadow(0 0 14px rgba(255,255,255,0.42))',
+      duration: 0.9, ease: 'power2.out'
+    }, KICK + 0.15);
+
+    return tl;
+  }
+
+  /* churn — 잠기지 않은 셀에 난수 가중치를 빠르게 흘린다 (3프레임마다) */
+  function churnTick() {
+    churnCount++;
+    if (churnCount % 3 !== 0) return;
+    for (var i = 0; i < matrixCells.length; i++) {
+      if (!matrixCells[i].locked) matrixCells[i].el.textContent = randW();
+    }
+  }
+
+  /* lock-in — 셀을 최종 가중치로 고정 */
+  function lockAt(idx) {
+    return function () {
+      var c = matrixCells[idx];
+      if (!c) return;
+      c.locked = true;
+      c.el.textContent = c.val;
+      c.el.classList.add('locked');
+    };
+  }
+
+  /* 빛 점 한 개의 이동을 타임라인에 추가 */
+  function addWireDot(timeline, w, pos, dur, ease) {
+    timeline.to(w.dot, { opacity: 1, duration: 0.16 }, pos);
+    timeline.to(w.dot, {
+      attr: { cx: w.ex, cy: w.ey }, duration: dur, ease: ease
+    }, pos);
+    timeline.to(w.dot, { opacity: 0, duration: 0.2 }, pos + dur * 0.86);
+  }
+
+  /* 입력 가중치 적용 — 빛 점이 닿을 때 칩 옆에 값이 뜬다 */
+  function addInputWeight(timeline, el, value, pos) {
+    timeline.call(function () {
+      el.textContent = '×' + value.toFixed(2);
+    }, null, pos);
+    timeline.to(el, { opacity: 1, x: 0, duration: 0.42, ease: 'power3.out' }, pos);
+  }
+
+  /* 숫자 카운트업 */
+  function addCount(timeline, el, pos, target, dec, dur) {
+    var p = { v: 0 };
+    el.textContent = (0).toFixed(dec);
+    timeline.to(p, {
+      v: target, duration: dur, ease: 'power2.out',
+      onUpdate: function () {
+        el.textContent = dec > 0
+          ? p.v.toFixed(dec)
+          : Math.round(p.v).toLocaleString('en-US');
+      }
+    }, pos);
+  }
+
+  /* ============================================================
+     앰비언트 모션 — 모델 완성 후
+     ============================================================ */
+  function startAmbient() {
+    killAmbient();
+    var model = document.getElementById('s4-model');
+    var fcDot = document.querySelector('#slide-4 .fc-dot');
+    if (model) {
+      ambient.push(gsap.to(model, {
+        '--mglow': 0.22, duration: 2.0, ease: 'sine.inOut', yoyo: true, repeat: -1
+      }));
+    }
+    if (fcDot) {
+      ambient.push(gsap.to(fcDot, {
+        opacity: 0.55, duration: 1.4, ease: 'sine.inOut', yoyo: true, repeat: -1
+      }));
+    }
+    /* 잠긴 행렬 셀 몇 개가 은은히 깜빡 — 모델이 살아 작동하는 느낌 */
+    var lit = [];
+    for (var i = 0; i < matrixCells.length; i++) lit.push(matrixCells[i].el);
+    shuffle(lit);
+    var pick = lit.slice(0, 5);
+    if (pick.length) {
+      ambient.push(gsap.to(pick, {
+        opacity: 0.42, duration: 1.5, ease: 'sine.inOut',
+        yoyo: true, repeat: -1,
+        stagger: { each: 0.5, from: 'random' }
+      }));
+    }
+  }
 
   function shuffle(a) {
     for (var i = a.length - 1; i > 0; i--) {
@@ -61,571 +439,32 @@ window.AiceSlide4 = (function () {
     return a;
   }
 
-  /* ============================================================
-     3D 건물 — 5면 직육면체
-     ============================================================ */
-  function face(cls, w, h, tf) {
-    var f = document.createElement('div');
-    f.className = 'face ' + cls;
-    f.style.width = w + 'px';
-    f.style.height = h + 'px';
-    f.style.transform = 'translate(-50%,-50%) ' + tf;
-    return f;
-  }
-
-  /* 히어로 건물 전용 — 면에 DOM 창문 격자를 깐다 */
-  function makeWindowGrid(faceEl, w, h) {
-    faceEl.classList.add('windowed');
-    var layer = document.createElement('div');
-    layer.className = 'windows';
-    var cols = Math.max(3, Math.round(w / 17));
-    var rows = Math.max(6, Math.round(h / 19));
-    layer.style.gridTemplateColumns = 'repeat(' + cols + ',1fr)';
-    layer.style.gridTemplateRows = 'repeat(' + rows + ',1fr)';
-    var lit = [];
-    for (var i = 0; i < cols * rows; i++) {
-      var win = document.createElement('div');
-      if (Math.random() < 0.4) {
-        win.className = 'win lit';
-        lit.push(win);
-      } else {
-        win.className = 'win';
-      }
-      layer.appendChild(win);
-    }
-    faceEl.appendChild(layer);
-    return { layer: layer, lit: lit };
-  }
-
-  /* 캠퍼스 건물 — 면에 점등 창문 몇 개를 흩뿌린다 (도시가 살아있는 느낌) */
-  function addCampusLights(faceEl, w, h) {
-    var lights = [];
-    var cols = Math.max(2, Math.round(w / 15));
-    var rows = Math.max(3, Math.round(h / 16));
-    var cellW = (w - 10) / cols;
-    var cellH = (h - 10) / rows;
-    var n = 2 + Math.floor(Math.random() * 4);
-    var used = {}, tries = 0;
-    while (lights.length < n && tries < 28) {
-      tries++;
-      var c = Math.floor(Math.random() * cols);
-      var r = Math.floor(Math.random() * rows);
-      var key = c + ',' + r;
-      if (used[key]) continue;
-      used[key] = 1;
-      var cell = document.createElement('div');
-      cell.className = 'clit';
-      cell.style.left = (5 + c * cellW + cellW * 0.2) + 'px';
-      cell.style.top = (5 + r * cellH + cellH * 0.2) + 'px';
-      cell.style.width = (cellW * 0.6) + 'px';
-      cell.style.height = (cellH * 0.58) + 'px';
-      faceEl.appendChild(cell);
-      lights.push(cell);
-    }
-    return lights;
-  }
-
-  /* C-EMS 코어에서 퍼지는 펄스 링 (바닥 평면) */
-  function makeCoreRings(tilt) {
-    coreRings = [];
-    for (var i = 0; i < 3; i++) {
-      var ring = document.createElement('div');
-      ring.className = 'corering';
-      tilt.appendChild(ring);
-      coreRings.push(ring);
-    }
-  }
-
-  /* 히어로 건물 옥상 — HVAC 유닛 미니 박스 */
-  function addRooftop(bldg, w, d, h) {
-    var defs = [
-      { s: w * 0.34, mh: 26, ox: -w * 0.15, oz: -d * 0.13 },
-      { s: w * 0.2,  mh: 16, ox:  w * 0.22, oz:  d * 0.19 }
-    ];
-    for (var i = 0; i < defs.length; i++) {
-      var u = defs[i];
-      var mini = makeBuilding(u.s, u.s, u.mh, { mini: true });
-      gsap.set(mini, { x: u.ox, y: -h, z: u.oz });
-      bldg.appendChild(mini);
-    }
-  }
-
-  /* 히어로 건물 정면 — 바닥에서 옥상으로 흐르는 에너지 펄스 */
-  function addPulse(faceEl, h) {
-    var pulse = document.createElement('div');
-    pulse.className = 'epulse';
-    pulse.style.height = (h * 0.26) + 'px';
-    faceEl.appendChild(pulse);
-    return pulse;
-  }
-
-  function makeBuilding(w, d, h, opts) {
-    opts = opts || {};
-    var bldg = document.createElement('div');
-    var box = document.createElement('div');
-    bldg.className = 'bldg';
-    box.className = 'box';
-
-    var fFront = face('front side', w, h, 'translateZ(' + (d / 2) + 'px)');
-    var fBack  = face('back side',  w, h, 'rotateY(180deg) translateZ(' + (d / 2) + 'px)');
-    var fRight = face('right side', d, h, 'rotateY(90deg) translateZ(' + (w / 2) + 'px)');
-    var fLeft  = face('left side',  d, h, 'rotateY(-90deg) translateZ(' + (w / 2) + 'px)');
-    var fTop   = face('top',        w, d, 'rotateX(90deg) translateZ(' + (h / 2) + 'px)');
-
-    if (opts.hero) {
-      var gF = makeWindowGrid(fFront, w, h);
-      var gR = makeWindowGrid(fRight, d, h);
-      bldg._windows = gF.lit.concat(gR.lit);
-    } else if (!opts.mini) {
-      bldg._lights = addCampusLights(fFront, w, h).concat(addCampusLights(fRight, d, h));
-    }
-
-    box.appendChild(fFront); box.appendChild(fBack);
-    box.appendChild(fRight); box.appendChild(fLeft);
-    box.appendChild(fTop);
-    bldg.appendChild(box);
-    bldg._box = box;
-    gsap.set(box, { y: -h / 2 });
-
-    if (opts.hero) {
-      addRooftop(bldg, w, d, h);
-      bldg._pulse = addPulse(fFront, h);
-    }
-    return bldg;
-  }
-
-  /* ============================================================
-     바닥 · 글로우 · 네트워크
-     ============================================================ */
-  function makeFloor() {
-    var floor = document.createElement('div');
-    floor.className = 'floor';
-    floor.style.width = '1660px';
-    floor.style.height = '1200px';
-    return floor;
-  }
-
-  function makeGroundGlow() {
-    var g = document.createElement('div');
-    g.className = 'gglow';
-    g.style.width = '470px';
-    g.style.height = '470px';
-    return g;
-  }
-
-  /* 캠퍼스 건물 → 중심 코어로 가는 연결선 (바닥 평면 위) */
-  function makeNetwork(world) {
-    netLines = []; netDots = [];
-    for (var i = 0; i < campusBldgs.length; i++) {
-      var b = campusBldgs[i];
-      var bx = b._x, bz = b._z;
-      var L = Math.sqrt(bx * bx + bz * bz);
-      if (L < 40) continue;
-      var phi = Math.atan2(-bz, bx) * 180 / Math.PI;
-      var line = document.createElement('div');
-      line.className = 'netline';
-      line.style.width = L + 'px';
-      line.style.transform = 'rotateY(' + phi + 'deg) rotateX(90deg)';
-      var dot = document.createElement('div');
-      dot.className = 'netdot';
-      line.appendChild(dot);
-      world.appendChild(line);
-      netLines.push(line);
-      netDots.push(dot);
-    }
-  }
-
-  function buildCity() {
-    var tilt = document.getElementById('s4-tilt');
-    if (!tilt) return;
-    tilt.innerHTML = '';
-    campusBldgs = []; allBldgs = []; netLines = []; netDots = [];
-    campusLights = []; coreRings = [];
-
-    floorEl = makeFloor();
-    tilt.appendChild(floorEl);
-    gglowEl = makeGroundGlow();
-    tilt.appendChild(gglowEl);
-
-    heroBldg = makeBuilding(HERO_W, HERO_D, HERO_H, { hero: true });
-    heroBldg._x = 0; heroBldg._z = 0;
-    gsap.set(heroBldg, { x: 0, z: 0 });
-    tilt.appendChild(heroBldg);
-    allBldgs.push(heroBldg);
-
-    /* 격자를 기준점으로 잡되 강한 지터로 흩뿌려 — 실제 캠퍼스처럼 불규칙하게.
-       셀 수보다 적게 골라 빈터(gap)도 생긴다. */
-    var SP = 128, cells = [];
-    for (var c = 0; c < 9; c++) {
-      for (var r = 0; r < 4; r++) {
-        var cx = (c - 4) * SP;
-        var cz = (r - 1.5) * SP;
-        if (Math.abs(cx) < 138 && Math.abs(cz) < 124) continue;
-        cells.push({ x: cx, z: cz });
-      }
-    }
-    shuffle(cells);
-    var count = Math.min(24, cells.length);
-    for (var i = 0; i < count; i++) {
-      var size = rnd(54, 96);
-      var b = makeBuilding(size, size, rnd(64, 184), {});
-      var bx = cells[i].x + rnd(-46, 46);
-      var bz = cells[i].z + rnd(-46, 46);
-      b._x = bx; b._z = bz;
-      gsap.set(b, { x: bx, z: bz, scale: 0, '--fill': rnd(0.1, 0.18) });
-      tilt.appendChild(b);
-      campusBldgs.push(b);
-      allBldgs.push(b);
-      if (b._lights) campusLights = campusLights.concat(b._lights);
-    }
-
-    netCoreEl = document.createElement('div');
-    netCoreEl.className = 'netcore';
-    tilt.appendChild(netCoreEl);
-    makeNetwork(tilt);
-    makeCoreRings(tilt);
-  }
-
-  /* ============================================================
-     스파크라인 (오늘 부하 곡선)
-     ============================================================ */
-  function buildSpark() {
-    var data = [0.22, 0.18, 0.16, 0.15, 0.17, 0.25, 0.42, 0.63,
-                0.78, 0.73, 0.69, 0.82, 0.93, 1.0, 0.85, 0.71,
-                0.67, 0.74, 0.83, 0.78, 0.6, 0.45, 0.33, 0.25];
-    var W = 240, H = 66, pad = 7, n = data.length, pts = [];
-    for (var i = 0; i < n; i++) {
-      var x = (i / (n - 1)) * W;
-      var y = H - pad - data[i] * (H - pad * 2);
-      pts.push([x, y]);
-    }
-    var line = 'M' + pts[0][0].toFixed(1) + ',' + pts[0][1].toFixed(1);
-    for (var j = 1; j < n; j++) {
-      line += ' L' + pts[j][0].toFixed(1) + ',' + pts[j][1].toFixed(1);
-    }
-    var area = line + ' L' + W + ',' + H + ' L0,' + H + ' Z';
-    var pk = 0;
-    for (var k = 0; k < n; k++) if (data[k] > data[pk]) pk = k;
-    return { line: line, area: area, peak: pts[pk] };
-  }
-
-  /* 타임라인에 숫자 카운트업을 추가 */
-  function addCount(tl, el, pos) {
-    if (!el) return;
-    var target = parseFloat(el.getAttribute('data-count')) || 0;
-    var suffix = el.getAttribute('data-suffix') || '';
-    var isInt = el.getAttribute('data-int') === '1';
-    var p = { v: 0 };
-    el.textContent = (isInt ? '0' : '0.0') + suffix;
-    tl.to(p, {
-      v: target, duration: 1.3, ease: 'power2.out',
-      onUpdate: function () {
-        var n = isInt
-          ? Math.round(p.v).toLocaleString('en-US')
-          : p.v.toFixed(1);
-        el.textContent = n + suffix;
-      }
-    }, pos);
-  }
-
-  /* ============================================================
-     타임라인 구성
-     ============================================================ */
-  function build() {
-    var world = document.getElementById('s4-world');
-    var spot = document.querySelector('#slide-4 .bg-spot');
-    var ems = document.getElementById('s4-ems');
-    var kicker = document.getElementById('s4-bems-kicker');
-    var sub = document.getElementById('s4-cems-sub');
-    var stats = document.getElementById('s4-cems-stats');
-    var buildingHud = document.getElementById('s4-building-hud');
-    var panelL = document.querySelector('#slide-4 .panel-left');
-    var panelR = document.querySelector('#slide-4 .panel-right');
-    var profile = document.querySelector('#slide-4 .building-profile');
-    var calloutDot = document.querySelector('#slide-4 .callout-dot');
-    var calloutLine = document.querySelector('#slide-4 .callout-line');
-    var calloutLabel = document.querySelector('#slide-4 .callout-label');
-    var panelItems = document.querySelectorAll(
-      '#slide-4 .panel-tag, #slide-4 .stat, #slide-4 .spark, #slide-4 .load-row, #slide-4 .gauge');
-    var loadBars = document.querySelectorAll('#slide-4 .load-track i');
-    var statVals = document.querySelectorAll('#slide-4 .stat-val');
-    var gaugeNum = document.querySelector('#slide-4 .gauge-num');
-    var sparkLine = document.querySelector('#slide-4 .spark-line');
-    var sparkArea = document.querySelector('#slide-4 .spark-area');
-    var sparkDot = document.querySelector('#slide-4 .spark-dot');
-    var gaugeFill = document.querySelector('#slide-4 .gauge-fill');
-    var chB = document.querySelector('#slide-4 .ch-b');
-    var chC = document.querySelector('#slide-4 .ch-c');
-    if (!world || !heroBldg || !ems) return;
-
-    if (tlIntro) tlIntro.kill();
-    if (tlReveal) tlReveal.kill();
-    killAmbient();
-
-    var emsOff = 'drop-shadow(0 0 0px rgba(255,255,255,0))';
-    var emsGlow = 'drop-shadow(0 0 26px rgba(255,255,255,0.45))';
-
-    /* 뷰포트 폭에 비례한 스케일 — 어느 발표 해상도에서도 일관 */
-    var k = Math.min(1.5, Math.max(0.55, window.innerWidth / 1280));
-    var act1Scale = ACT1_SCALE * k, act1Y = ACT1_Y * k;
-    var act2Scale = ACT2_SCALE * k, act2Y = ACT2_Y * k;
-
-    /* 스파크라인 그리기 */
-    var slen = 0;
-    if (sparkLine && sparkArea && sparkDot) {
-      var sp = buildSpark();
-      sparkLine.setAttribute('d', sp.line);
-      sparkArea.setAttribute('d', sp.area);
-      sparkDot.setAttribute('cx', sp.peak[0].toFixed(1));
-      sparkDot.setAttribute('cy', sp.peak[1].toFixed(1));
-      slen = sparkLine.getTotalLength ? sparkLine.getTotalLength() : 320;
-    }
-    /* 게이지 호 길이 */
-    var glen = gaugeFill && gaugeFill.getTotalLength
-      ? gaugeFill.getTotalLength() : 157;
-    var gPct = 0.87;
-
-    var heroWindows = heroBldg._windows || [];
-    var heroPulse = heroBldg._pulse;
-
-    /* ----- 초기 상태 ----- */
-    gsap.set(spot, { opacity: 0 });
-    gsap.set(world, { scale: act1Scale, y: act1Y });
-    gsap.set(heroBldg, { scale: 0.52, '--edge': 0.1, '--glow': 0, '--fill': 0.14 });
-    gsap.set(campusBldgs, { scale: 0, '--edge': EDGE_DIM, '--glow': 0 });
-    gsap.set(floorEl, { opacity: 0 });
-    gsap.set(gglowEl, { opacity: 0 });
-    gsap.set(netCoreEl, { opacity: 0, scale: 0.4 });
-    if (netLines.length) gsap.set(netLines, { opacity: 0 });
-    if (netDots.length) gsap.set(netDots, { opacity: 0 });
-    if (campusLights.length) gsap.set(campusLights, { opacity: 0 });
-    if (coreRings.length) gsap.set(coreRings, { opacity: 0, scale: 0.12 });
-    if (heroWindows.length) gsap.set(heroWindows, { opacity: 0 });
-    if (heroPulse) gsap.set(heroPulse, { opacity: 0, y: 0 });
-
-    gsap.set(ems, { xPercent: -50, scale: 0.56, y: -6, opacity: 0, filter: emsOff });
-    gsap.set(kicker, { opacity: 0, y: 10 });
-    gsap.set(sub, { opacity: 0, y: 12 });
-    gsap.set(stats, { opacity: 0, y: 12 });
-    gsap.set(buildingHud, { opacity: 1 });
-    gsap.set(panelL, { opacity: 0, x: -28 });
-    gsap.set(panelR, { opacity: 0, x: 28 });
-    gsap.set(profile, { opacity: 0, y: 20 });
-    gsap.set(calloutDot, { scale: 0, opacity: 0, transformOrigin: '50% 50%' });
-    gsap.set(calloutLine, { scaleX: 0, transformOrigin: '100% 50%' });
-    gsap.set(calloutLabel, { opacity: 0, x: 12 });
-    gsap.set(panelItems, { opacity: 0, y: 9 });
-    gsap.set(loadBars, { scaleX: 0, transformOrigin: '0% 50%' });
-    gsap.set(chB, { opacity: 1, y: 0 });
-    gsap.set(chC, { opacity: 0, y: 16 });
-    if (sparkLine) gsap.set(sparkLine, { strokeDasharray: slen, strokeDashoffset: slen });
-    if (sparkArea) gsap.set(sparkArea, { opacity: 0 });
-    if (sparkDot) gsap.set(sparkDot, { opacity: 0, scale: 0, transformOrigin: '50% 50%' });
-    if (gaugeFill) gsap.set(gaugeFill, { strokeDasharray: glen, strokeDashoffset: glen });
-
-    /* ----- 1막 — 단일 건물 관제 화면 ----- */
-    tlIntro = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
-    tlIntro.to(spot, { opacity: 0.9, duration: 1.6, ease: 'power2.out' }, 0);
-    tlIntro.to(floorEl, { opacity: 0.6, duration: 1.5, ease: 'power2.out' }, 0);
-    tlIntro.to(gglowEl, { opacity: 1, duration: 1.5, ease: 'power2.out' }, 0.1);
-    tlIntro.to(heroBldg, { scale: 1, duration: 1.5, ease: 'expo.out' }, 0);
-    tlIntro.to(heroBldg, { '--edge': EDGE_HERO, duration: 1.3, ease: 'power2.out' }, 0.15);
-    if (heroWindows.length) {
-      tlIntro.to(heroWindows, {
-        opacity: 1, duration: 0.5, ease: 'power1.out',
-        stagger: { each: 0.03, from: 'random' }
-      }, 0.55);
-    }
-    tlIntro.to(ems, { opacity: 1, duration: 0.9, ease: 'power2.out' }, 0.55);
-    tlIntro.to(kicker, { opacity: 1, y: 0, duration: 0.7 }, 0.7);
-    tlIntro.to(panelL, { opacity: 1, x: 0, duration: 0.8 }, 0.85);
-    tlIntro.to(panelR, { opacity: 1, x: 0, duration: 0.8 }, 0.95);
-    tlIntro.to(profile, { opacity: 1, y: 0, duration: 0.75 }, 1.05);
-    tlIntro.to(panelItems, {
-      opacity: 1, y: 0, duration: 0.55, stagger: 0.05
-    }, 1.05);
-    addCount(tlIntro, statVals[0], 1.2);
-    addCount(tlIntro, statVals[1], 1.32);
-    tlIntro.to(loadBars, {
-      scaleX: 1, duration: 0.9, ease: 'power2.out', stagger: 0.08
-    }, 1.35);
-    if (sparkArea) tlIntro.to(sparkArea, { opacity: 1, duration: 0.8 }, 1.5);
-    if (sparkLine) tlIntro.to(sparkLine, { strokeDashoffset: 0, duration: 1.15, ease: 'power2.out' }, 1.45);
-    if (sparkDot) tlIntro.to(sparkDot, { opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(2)' }, 2.35);
-    if (gaugeFill) tlIntro.to(gaugeFill, { strokeDashoffset: glen * (1 - gPct), duration: 1.2, ease: 'power2.out' }, 1.6);
-    addCount(tlIntro, gaugeNum, 1.6);
-    tlIntro.call(startAmbient, null, 2.0);
-
-    /* 콜아웃 — 빌딩에서 노드·리더 선이 끌어나오고 라벨이 뜬다 */
-    tlIntro.to(calloutDot, { scale: 1, opacity: 1, duration: 0.45, ease: 'power3.out' }, 2.55);
-    tlIntro.to(calloutLine, { scaleX: 1, duration: 0.55, ease: 'power2.out' }, 2.7);
-    tlIntro.to(calloutLabel, { opacity: 1, x: 0, duration: 0.55, ease: 'power3.out' }, 3.0);
-
-    /* ----- 2막 — 부감 줌아웃 → 캠퍼스 C-EMS ----- */
-    tlReveal = gsap.timeline({
-      paused: true,
-      defaults: { ease: 'power3.out' },
-      onStart: onRevealStart
-    });
-
-    tlReveal.to(world, {
-      scale: act2Scale, y: act2Y,
-      duration: 2.7, ease: 'power3.inOut'
-    }, 0);
-    tlReveal.to([kicker, buildingHud], {
-      opacity: 0, y: -12, duration: 0.55, ease: 'power2.in'
-    }, 0);
-    tlReveal.to(floorEl, { opacity: 0.95, duration: 1.6, ease: 'power2.out' }, 0.2);
-    tlReveal.to(campusBldgs, {
-      scale: 1, duration: 1.2, ease: 'power3.out',
-      stagger: { each: 0.05, from: 'random' }
-    }, 0.4);
-    tlReveal.to(ems, { scale: 1, y: 0, duration: 2.1, ease: 'power3.inOut' }, 0.3);
-
-    tlReveal.addLabel('morph', 1.8);
-    tlReveal.to(chB, { opacity: 0, y: -18, duration: 0.55, ease: 'power2.in' }, 'morph');
-    tlReveal.to(chC, { opacity: 1, y: 0, duration: 0.7, ease: 'power3.out' }, 'morph+=0.05');
-
-    tlReveal.addLabel('cems', 2.5);
-    tlReveal.to(ems, { filter: emsGlow, duration: 1.0, ease: 'power2.out' }, 'cems');
-    tlReveal.to(sub, { opacity: 1, y: 0, duration: 0.9 }, 'cems+=0.1');
-    tlReveal.to(stats, { opacity: 1, y: 0, duration: 0.9 }, 'cems+=0.3');
-    tlReveal.to(campusBldgs, {
-      '--edge': EDGE_LIT, duration: 1.0, ease: 'power2.out',
-      stagger: { each: 0.04, from: 'random' }
-    }, 'cems');
-    tlReveal.to(netCoreEl, { opacity: 1, scale: 1, duration: 1.0, ease: 'power2.out' }, 'cems');
-    if (netLines.length) {
-      tlReveal.to(netLines, {
-        opacity: 1, duration: 0.8, ease: 'power2.out',
-        stagger: { each: 0.03, from: 'random' }
-      }, 'cems+=0.15');
-    }
-    /* 캠퍼스 창문이 하나둘 점등 — 도시가 살아난다 */
-    if (campusLights.length) {
-      tlReveal.to(campusLights, {
-        opacity: 1, duration: 0.5, ease: 'power1.out',
-        stagger: { each: 0.013, from: 'random' }
-      }, 'cems+=0.2');
-    }
-    tlReveal.to(allBldgs, {
-      '--glow': 0.32, duration: 0.5, ease: 'sine.out',
-      yoyo: true, repeat: 1,
-      stagger: { each: 0.04, from: 'random' }
-    }, 'cems+=0.15');
-    tlReveal.call(startCoreRings, null, 'cems+=0.4');
-    tlReveal.call(startCampusAmbient, null, 'cems+=1.4');
-  }
-
-  /* ============================================================
-     앰비언트 모션
-     ============================================================ */
-  function startAmbient() {
-    stopHeroBlink();
-    if (heroBldg) {
-      heroBlink = gsap.to(heroBldg, {
-        '--glow': 0.22, duration: 1.0, ease: 'sine.inOut',
-        repeat: -1, yoyo: true
-      });
-    }
-    /* 에너지 펄스 — 바닥에서 옥상으로 */
-    var pulse = heroBldg && heroBldg._pulse;
-    if (pulse) {
-      if (heroPulseTw) heroPulseTw.kill();
-      heroPulseTw = gsap.to(pulse, {
-        keyframes: {
-          y: [0, -(HERO_H * 1.05)],
-          opacity: [0, 0.85, 0.85, 0]
-        },
-        duration: 2.8, ease: 'none', repeat: -1, repeatDelay: 0.7
-      });
-    }
-    /* 창문 깜빡임 — 일부만 */
-    var wins = (heroBldg && heroBldg._windows) || [];
-    if (wins.length) {
-      var pick = shuffle(wins.slice()).slice(0, Math.min(4, wins.length));
-      if (winFlickerTw) winFlickerTw.kill();
-      winFlickerTw = gsap.to(pick, {
-        opacity: 0.16, duration: 1.4, ease: 'sine.inOut',
-        repeat: -1, yoyo: true,
-        stagger: { each: 0.5, from: 'random' }
-      });
-    }
-  }
-
-  function startCampusAmbient() {
-    if (shimmer) shimmer.kill();
-    if (campusBldgs.length) {
-      shimmer = gsap.to(campusBldgs, {
-        '--edge': 0.48, duration: 2.0, ease: 'sine.inOut',
-        repeat: -1, yoyo: true,
-        stagger: { each: 0.16, from: 'random' }
-      });
-    }
-    /* 네트워크 빛 점이 캠퍼스 → 코어로 흐른다 */
-    if (netDots.length) {
-      if (netFlowTw) netFlowTw.kill();
-      gsap.set(netDots, { left: '100%', opacity: 0 });
-      netFlowTw = gsap.to(netDots, {
-        keyframes: { left: ['100%', '0%'], opacity: [0, 1, 1, 0] },
-        duration: 1.9, ease: 'none', repeat: -1,
-        stagger: { each: 0.14, from: 'random' }
-      });
-    }
-  }
-
-  /* C-EMS 코어에서 펄스 링이 캠퍼스로 퍼진다 */
-  function startCoreRings() {
-    for (var k = 0; k < coreRingTws.length; k++) coreRingTws[k].kill();
-    coreRingTws = [];
-    for (var i = 0; i < coreRings.length; i++) {
-      gsap.set(coreRings[i], { scale: 0.12, opacity: 0 });
-      coreRingTws.push(gsap.to(coreRings[i], {
-        keyframes: { scale: [0.12, 1.7], opacity: [0, 0.42, 0] },
-        duration: 4.8, ease: 'sine.out', repeat: -1, delay: i * 1.6
-      }));
-    }
-  }
-
-  function stopHeroBlink() {
-    if (heroBlink) { heroBlink.kill(); heroBlink = null; }
-    if (heroBldg) gsap.set(heroBldg, { '--glow': 0 });
-  }
-
-  function onRevealStart() {
-    stopHeroBlink();
-    if (winFlickerTw) { winFlickerTw.kill(); winFlickerTw = null; }
-  }
-
   function killAmbient() {
-    stopHeroBlink();
-    if (heroPulseTw) { heroPulseTw.kill(); heroPulseTw = null; }
-    if (winFlickerTw) { winFlickerTw.kill(); winFlickerTw = null; }
-    if (shimmer) { shimmer.kill(); shimmer = null; }
-    if (netFlowTw) { netFlowTw.kill(); netFlowTw = null; }
-    for (var i = 0; i < coreRingTws.length; i++) coreRingTws[i].kill();
-    coreRingTws = [];
+    for (var i = 0; i < ambient.length; i++) ambient[i].kill();
+    ambient = [];
   }
 
   /* ============================================================
      재생 제어
      ============================================================ */
   function play() {
-    if (!tlIntro || played) return;
+    if (played) return;
     played = true;
-    revealed = false;
-    tlIntro.play(0);
+    buildWires();   // 재생 직전 좌표 재계산 — 리사이즈에도 정확
+    build();
+    if (tl) tl.play(0);
   }
 
-  function advance() {
-    if (!played || revealed) return false;
-    revealed = true;
-    if (tlIntro.progress() < 1) {
-      tlIntro.progress(1);
-      startAmbient();
-    }
-    tlReveal.play(0);
-    return true;
+  /* 리사이즈 — 연결선은 화면 좌표 기반이라 재계산이 필요하다. */
+  var resizeTimer = null;
+  function onResize() {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () {
+      if (!played) return;
+      buildWires();
+      build();
+      if (tl) tl.progress(1);   // 이미 끝난 상태 → 새 좌표로 종료 프레임 재구성
+    }, 180);
   }
 
   function observe() {
@@ -644,29 +483,28 @@ window.AiceSlide4 = (function () {
     io.observe(el);
   }
 
+  /* ----- 공개 API ----- */
   function setup() {
-    buildCity();
+    buildMatrix();
+    buildWires();
     build();
     observe();
   }
-
   function init() {
     makeParticles();
+    window.addEventListener('resize', onResize);
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(setup);
     } else {
       setup();
     }
   }
-
   function replay() {
     played = false;
-    revealed = false;
     killAmbient();
-    buildCity();
-    build();
+    buildMatrix();
     play();
   }
 
-  return { init: init, replay: replay, advance: advance };
+  return { init: init, replay: replay };
 })();

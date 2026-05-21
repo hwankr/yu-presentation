@@ -1,20 +1,20 @@
 /* ============================================================
-   slide-4.css — 슬라이드 4 (솔루션 · B-EMS → C-EMS)
-   정사영(orthographic) 아이소메트릭 — 원근 왜곡 없음 →
-   건물 수직 모서리가 항상 화면 수직선. 절대 기울어 보이지 않는다.
-   1막: 단일 건물 + 관제 콘솔 HUD → 2막: 부감 줌아웃 + 캠퍼스 C-EMS
+   slide-4.css — 슬라이드 4 (예측 엔진 · 머신러닝 작동 원리)
+   가로 3단 수렴 파이프라인:
+   입력 변수+가중치 → 예측 모델(가중치 행렬 학습) → 전력 사용량 카운트업.
+   입력은 윤곽선, 모델·출력은 솔리드 — 색이 아닌 형태 대비.
    ============================================================ */
 
 #slide-4 { background: var(--bg); }
 
-/* ----- 배경 (슬라이드 1·2·3 톤 재사용) ----- */
+/* ----- 배경 (슬라이드 1~3 톤 재사용) ----- */
 #slide-4 .bg { position: absolute; inset: 0; z-index: 0; }
 
 #slide-4 .bg-spot {
   position: absolute; left: 50%; top: 50%;
   width: 1300px; height: 1300px;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 64%);
+  background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 64%);
 }
 
 #slide-4 .bg-vignette {
@@ -31,541 +31,296 @@
 /* ----- 무대 ----- */
 #slide-4 .stage { position: relative; z-index: 2; height: 100%; }
 
-/* ----- 3D 씬 — 정사영(perspective 없음) ----- */
-#slide-4 .scene {
-  position: absolute; inset: 0;
-  overflow: hidden;
-}
-/* .world — GSAP이 스케일·이동만 적용 (회전 없음 → 수직 모서리 보존) */
-#slide-4 .world {
-  position: absolute; left: 50%; top: 58%;
-  width: 0; height: 0;
-  transform-style: preserve-3d;
-  transform-origin: 0 0;
-  will-change: transform;
-}
-/* .tilt — 회전 고정. rotateX 먼저(바깥) → rotateY → 수직축이 화면 수직 유지.
-   rotateX -54° = 부감(버드 아이, 위에서 내려다봄) — 윗면이 또렷이 보여 직육면체로 읽힌다.
-   (양수면 아래에서 올려다보게 되어 윗면이 backface로 숨는다.) */
-#slide-4 .tilt {
-  position: absolute; left: 0; top: 0;
-  width: 0; height: 0;
-  transform-style: preserve-3d;
-  transform: rotateX(-54deg) rotateY(-36deg);
-}
-
-/* ----- 바닥 그리드 평면 (XZ 평면에 눕힘) ----- */
-#slide-4 .floor {
-  position: absolute; left: 0; top: 0;
-  transform-style: preserve-3d;
-  transform: translate(-50%, -50%) rotateX(90deg);
-  background-image:
-    repeating-linear-gradient(to right,
-      rgba(255,255,255,0.10) 0 1px, transparent 1px 116px),
-    repeating-linear-gradient(to bottom,
-      rgba(255,255,255,0.10) 0 1px, transparent 1px 116px);
-  -webkit-mask-image: radial-gradient(ellipse 52% 52% at 50% 50%, #000 12%, transparent 78%);
-          mask-image: radial-gradient(ellipse 52% 52% at 50% 50%, #000 12%, transparent 78%);
-}
-
-/* ----- 발밑 글로우 디스크 (바닥 평면) ----- */
-#slide-4 .gglow {
-  position: absolute; left: 0; top: 0;
-  transform: translate(-50%, -50%) rotateX(90deg);
-  background: radial-gradient(ellipse 50% 50% at 50% 50%,
-    rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.06) 38%, transparent 72%);
-  pointer-events: none;
-}
-
-/* ----- 캠퍼스 네트워크 연결선 (바닥 평면) ----- */
-#slide-4 .netline {
-  position: absolute; left: 0; top: 0;
-  height: 2px;
-  transform-origin: 0% 50%;
-  background: linear-gradient(to right,
-    rgba(255,255,255,0.46) 0%, rgba(255,255,255,0.05) 100%);
-  overflow: hidden;
-}
-#slide-4 .netdot {
-  position: absolute; top: 50%; left: 0;
-  width: 6px; height: 6px; border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 0 9px rgba(255,255,255,0.9);
-  transform: translate(-50%, -50%);
-}
-#slide-4 .netcore {
-  position: absolute; left: 0; top: 0;
-  width: 130px; height: 130px; border-radius: 50%;
-  transform: translate(-50%, -50%) rotateX(90deg);
-  border: 1px solid rgba(255,255,255,0.5);
-  box-shadow: 0 0 26px rgba(255,255,255,0.3);
-}
-/* 코어에서 퍼지는 펄스 링 (바닥 평면) */
-#slide-4 .corering {
-  position: absolute; left: 0; top: 0;
-  width: 400px; height: 400px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.5);
-  transform: translate(-50%, -50%) rotateX(90deg);
-  pointer-events: none;
-}
-
-/* ----- 아이소메트릭 빌딩 (정사각형 바닥면 + 높이 변형) ----- */
-#slide-4 .bldg {
-  position: absolute; left: 0; top: 0;
-  width: 0; height: 0;
-  transform-style: preserve-3d;
-  --edge: 0.12;
-  --glow: 0;
-  --fill: 0.13;
-}
-#slide-4 .box {
-  position: absolute; left: 0; top: 0;
-  width: 0; height: 0;
-  transform-style: preserve-3d;
-}
-#slide-4 .face {
-  position: absolute; left: 0; top: 0;
-  border: 1px solid rgb(255 255 255 / var(--edge));
-  background-color: rgb(244 244 242 / var(--fill));
-  box-shadow:
-    inset 0 0 22px rgb(255 255 255 / calc(var(--edge) * 0.14)),
-    0 0 18px rgb(255 255 255 / var(--glow));
-  backface-visibility: hidden;
-}
-/* 캠퍼스 건물 — 가벼운 그라데이션 창문 격자 */
-#slide-4 .face.side {
-  background-image:
-    repeating-linear-gradient(to bottom,
-      rgb(255 255 255 / calc(var(--edge) * 0.46)) 0 1px, transparent 1px 16px),
-    repeating-linear-gradient(to right,
-      transparent 0 9px,
-      rgb(255 255 255 / calc(var(--edge) * 0.36)) 9px 14px,
-      transparent 14px 22px);
-}
-#slide-4 .face.front { background-color: rgb(244 244 242 / calc(var(--fill) + 0.04)); }
-#slide-4 .face.right { background-color: rgb(244 244 242 / calc(var(--fill) * 0.70)); }
-#slide-4 .face.left,
-#slide-4 .face.back  { background-color: rgb(244 244 242 / calc(var(--fill) * 0.40)); }
-#slide-4 .face.top {
-  background-color: rgb(244 244 242 / calc(var(--fill) + 0.08));
-  background-image:
-    linear-gradient(135deg, rgb(255 255 255 / calc(var(--edge) * 0.36)) 0 1px, transparent 1px),
-    repeating-linear-gradient(to right,
-      rgb(255 255 255 / calc(var(--edge) * 0.20)) 0 1px, transparent 1px 16px);
-}
-
-/* ----- 히어로 건물 — DOM 창문 격자 ----- */
-#slide-4 .face.windowed {
-  background-image: none;
-  background-color: rgb(10 10 11 / 0.55);
-}
-/* 정면은 밝게, 우측면은 그늘지게 — 모서리에서 명암이 꺾여 직육면체로 읽힌다 */
-#slide-4 .face.windowed.front { filter: brightness(1.12); }
-#slide-4 .face.windowed.right { filter: brightness(0.6); }
-#slide-4 .windows {
-  position: absolute; left: 7px; right: 7px; top: 8px; bottom: 8px;
-  display: grid; gap: 4px;
-}
-#slide-4 .win {
-  background: rgb(244 244 242 / 0.06);
-}
-#slide-4 .win.lit {
-  background: rgb(244 244 242 / 0.62);
-  box-shadow: 0 0 8px rgba(255,255,255,0.34);
-}
-
-/* ----- 캠퍼스 건물 — 점등 창문 (소수의 밝은 셀) ----- */
-#slide-4 .clit {
-  position: absolute;
-  background: rgb(244 244 242 / 0.6);
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
-}
-
-/* ----- 히어로 건물 — 옥상 빛 펄스 ----- */
-#slide-4 .epulse {
-  position: absolute; left: 50%; bottom: 0;
-  width: 5px;
-  transform: translateX(-50%);
-  background: linear-gradient(to top,
-    transparent 0%, rgba(255,255,255,0.95) 50%, transparent 100%);
-  box-shadow: 0 0 12px rgba(255,255,255,0.7);
-  pointer-events: none;
-}
-
-/* ============================================================
-   HUD — 3D 위 2D 레이어
-   ============================================================ */
-#slide-4 .hud {
-  position: absolute; inset: 0; z-index: 3;
-  pointer-events: none;
-  color: var(--text);
-}
-
-/* ----- 헤드라인 B-EMS / C-EMS ----- */
-#slide-4 .ems {
-  position: absolute; left: 50%; top: 5.5%;
-  font-family: 'Fraunces', serif;
-  font-weight: 600;
-  font-size: clamp(3rem, 7.4vw, 6rem);
-  line-height: 1;
-  color: var(--text);
-  white-space: nowrap;
-}
-#slide-4 .ems-pre { position: relative; display: inline-block; }
-#slide-4 .ems-pre .ch { display: inline-block; }
-#slide-4 .ems-pre .ch-b {
-  position: absolute; left: 0; top: 0;
-  width: 100%; text-align: center;
-}
-
-/* ----- 1막 킥커 ----- */
-#slide-4 .bems-kicker {
-  position: absolute; left: 50%; top: 16.5%;
-  transform: translateX(-50%);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.34em;
-  text-transform: uppercase;
-  color: rgba(244, 244, 242, 0.46);
-  white-space: nowrap;
-}
-
-/* ----- 2막 부제 + 집계 스트립 ----- */
-#slide-4 .cems-sub {
-  position: absolute; left: 50%; top: 21.5%;
+/* ----- 상단 eyebrow ----- */
+#slide-4 .eyebrow {
+  position: absolute; left: 50%; top: 9.5%;
   transform: translateX(-50%);
   font-family: 'Pretendard', sans-serif;
-  font-weight: 500;
-  font-size: clamp(0.95rem, 2vw, 1.3rem);
-  letter-spacing: 0.04em;
-  color: var(--dim);
-  white-space: nowrap;
-}
-#slide-4 .cems-stats {
-  position: absolute; left: 50%; top: 26.5%;
-  transform: translateX(-50%);
-  display: flex; align-items: center; gap: 0.9rem;
-  white-space: nowrap;
-}
-#slide-4 .cems-stats .cs {
-  display: flex; align-items: baseline; gap: 0.32rem;
-  font-size: 0.82rem;
-  letter-spacing: 0.03em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.32em;
   color: rgba(244, 244, 242, 0.5);
-}
-#slide-4 .cems-stats .cs b {
-  font-size: 1.16rem;
-  font-weight: 760;
-  color: var(--text);
-}
-#slide-4 .cems-stats .cs small { font-size: 0.72rem; }
-#slide-4 .cems-stats .cs-dot {
-  width: 3px; height: 3px; border-radius: 50%;
-  background: rgba(244, 244, 242, 0.34);
-}
-#slide-4 .cems-stats .cs-live i {
-  display: inline-block;
-  width: 6px; height: 6px; margin-right: 0.4rem;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 0 8px rgba(255,255,255,0.9);
+  white-space: nowrap;
 }
 
 /* ============================================================
-   1막 — 단일 건물 관제 콘솔
+   수렴 파이프라인
    ============================================================ */
-#slide-4 .building-hud { position: absolute; inset: 0; }
-
-/* ----- 관제 패널 (좌 · 우) ----- */
-#slide-4 .panel {
-  position: absolute; top: 50%;
-  width: clamp(13.5rem, 22.5vw, 19.5rem);
-  padding: 1.15rem 1.25rem 1.3rem;
-  transform: translateY(-50%);
-  background: rgba(9, 9, 10, 0.62);
-  border: 1px solid rgba(244, 244, 242, 0.14);
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
+#slide-4 .pipeline {
+  position: absolute; left: 50%; top: 51%;
+  width: min(1200px, 94vw);
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
-#slide-4 .panel-left  { left: 3.6vw; }
-#slide-4 .panel-right { right: 3.6vw; }
 
-/* 코너 브래킷 — 관제 화면 프레임 */
-#slide-4 .panel::before,
-#slide-4 .panel::after {
+/* 연결선 SVG — 가중치·모델 좌표로 JS가 path 생성. 요소 뒤에 깔린다. */
+#slide-4 .wires {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 1;
+}
+#slide-4 .wire {
+  fill: none;
+  stroke: rgba(244, 244, 242, 0.34);
+  stroke-width: 1.4;
+  stroke-linecap: round;
+}
+#slide-4 .wiredot {
+  fill: #fff;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.9));
+}
+
+/* ----- 좌 · 입력 변수 + 가중치 ----- */
+#slide-4 .inputs {
+  position: relative; z-index: 2;
+  width: clamp(16rem, 28vw, 22rem);
+  display: flex; flex-direction: column;
+  gap: 1.05rem;
+}
+/* 변수 그룹 — 라벨 + 칩을 한 모듈 박스로 묶는다 (라벨이 그 칩들의 헤더) */
+#slide-4 .vgroup {
+  position: relative;
+  padding: 0.62rem 0.85rem 0.78rem;
+  border: 1px solid rgba(244, 244, 242, 0.15);
+  background: rgba(244, 244, 242, 0.018);
+}
+#slide-4 .vgroup-label {
+  display: block;
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.46rem;
+  border-bottom: 1px solid rgba(244, 244, 242, 0.1);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: rgba(244, 244, 242, 0.52);
+}
+#slide-4 .chips {
+  display: flex; flex-direction: column;
+  gap: 0.44rem;
+}
+#slide-4 .vrow {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+#slide-4 .chip {
+  display: inline-flex; align-items: center;
+  padding: 0.44rem 0.95rem;
+  border: 1px solid rgba(244, 244, 242, 0.32);
+  border-radius: 999px;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--text);
+  white-space: nowrap;
+  will-change: transform, opacity, filter;
+}
+/* 적용 가중치 — 입력별로 모델에 들어가는 값 */
+#slide-4 .wt {
+  min-width: 3rem;
+  text-align: right;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 760;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* ----- 중앙 · 예측 모델 패널 ----- */
+#slide-4 .ml {
+  position: relative; z-index: 2;
+  width: clamp(14.5rem, 23vw, 19rem);
+}
+#slide-4 .model {
+  --mglow: 0;
+  position: relative;
+  padding: 1rem 1.1rem 1.1rem;
+  background: rgba(9, 9, 10, 0.66);
+  border: 1px solid rgba(244, 244, 242, 0.16);
+  box-shadow:
+    0 0 40px rgba(0, 0, 0, 0.5),
+    0 0 38px rgb(255 255 255 / var(--mglow));
+  backdrop-filter: blur(4px);
+  will-change: box-shadow;
+}
+/* 코너 브래킷 — 관제 화면 프레임 (슬라이드 4 톤) */
+#slide-4 .model::before,
+#slide-4 .model::after {
   content: ""; position: absolute;
   width: 15px; height: 15px;
   border: 1px solid rgba(244, 244, 242, 0.72);
 }
-#slide-4 .panel::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
-#slide-4 .panel::after  { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+#slide-4 .model::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+#slide-4 .model::after  { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
 
-#slide-4 .panel-tag {
+#slide-4 .model-tag {
   display: block;
-  margin-bottom: 1rem;
-  padding-bottom: 0.6rem;
+  padding-bottom: 0.58rem;
   border-bottom: 1px solid rgba(244, 244, 242, 0.12);
-  font-size: 0.62rem;
+  font-size: 0.6rem;
   font-weight: 700;
-  letter-spacing: 0.26em;
-  color: rgba(244, 244, 242, 0.46);
-}
-
-/* ----- 핵심 수치 — 라벨 위 / 큰 숫자 아래 (대시보드 KPI 스타일) ----- */
-#slide-4 .stat { margin-bottom: 0.82rem; }
-#slide-4 .stat-label {
-  display: block;
-  margin-bottom: 0.18rem;
-  font-size: 0.74rem;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.24em;
   color: rgba(244, 244, 242, 0.5);
 }
-#slide-4 .stat-val {
-  display: block;
-  font-weight: 760;
-  font-size: 1.3rem;
-  line-height: 1;
-  letter-spacing: 0;
-  color: var(--text);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-#slide-4 .stat-hero .stat-val {
-  font-size: clamp(1.7rem, 2.6vw, 2.25rem);
-}
-#slide-4 .stat-hero { margin-bottom: 1rem; }
 
-/* ----- 부하 곡선 스파크라인 ----- */
-#slide-4 .spark { margin-top: 1.05rem; }
-#slide-4 .spark-head {
-  display: flex; justify-content: space-between; align-items: baseline;
-  margin-bottom: 0.5rem;
-}
-#slide-4 .spark-label {
-  font-size: 0.7rem; letter-spacing: 0.04em;
-  color: rgba(244, 244, 242, 0.5);
-}
-#slide-4 .spark-peak-label {
-  font-size: 0.66rem; font-weight: 700;
-  letter-spacing: 0.04em;
-  color: rgba(244, 244, 242, 0.78);
-}
-#slide-4 .spark-svg {
-  display: block; width: 100%; height: 58px;
-}
-#slide-4 .spark-area { fill: rgba(244, 244, 242, 0.08); stroke: none; }
-#slide-4 .spark-line {
-  fill: none;
-  stroke: rgba(244, 244, 242, 0.92);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-#slide-4 .spark-dot {
-  fill: #fff;
-  filter: drop-shadow(0 0 5px rgba(255,255,255,0.85));
-}
-
-/* ----- 층별 부하 ----- */
-#slide-4 .load { margin-top: 0.1rem; }
-#slide-4 .load-row {
+/* 가중치 행렬 — 학습 중 churn → 한 칸씩 lock-in */
+#slide-4 .matrix {
   display: grid;
-  grid-template-columns: 2rem 1fr 3.1rem;
-  align-items: center;
-  gap: 0.7rem;
-  margin: 0.62rem 0;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 5px;
+  margin: 0.85rem 0 0.9rem;
 }
-#slide-4 .load-fl {
-  font-size: 0.78rem; font-weight: 600;
-  color: rgba(244, 244, 242, 0.62);
+#slide-4 .wcell {
+  padding: 0.22rem 0;
+  text-align: center;
+  font-family: 'Pretendard', sans-serif;
+  font-size: 0.62rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  color: rgba(244, 244, 242, 0.3);          /* churn 중 — 흐림 */
+  border: 1px solid rgba(244, 244, 242, 0.06);
+  background: rgba(244, 244, 242, 0.02);
+  transition: color 0.18s, background-color 0.18s, border-color 0.18s;
 }
-#slide-4 .load-track {
+#slide-4 .wcell.locked {                      /* lock-in — 솔리드 */
+  color: var(--text);
+  border-color: rgba(244, 244, 242, 0.24);
+  background: rgba(244, 244, 242, 0.08);
+  box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.06);
+}
+
+/* 모델 학습 진행 막대 */
+#slide-4 .progress {
+  display: flex; align-items: center;
+  gap: 0.5rem;
+}
+#slide-4 .prog-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  color: rgba(244, 244, 242, 0.5);
+  white-space: nowrap;
+}
+#slide-4 .prog-track {
   position: relative;
-  height: 9px;
+  flex: 1;
+  height: 6px;
   background: rgba(244, 244, 242, 0.09);
   border: 1px solid rgba(244, 244, 242, 0.08);
 }
-#slide-4 .load-track i {
+#slide-4 .prog-fill {
   display: block; position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: var(--w);
+  left: 0; top: 0; bottom: 0; right: 0;
   transform-origin: 0% 50%;
   background: linear-gradient(to right,
     rgba(244, 244, 242, 0.5), rgba(244, 244, 242, 0.95));
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
 }
-#slide-4 .load-kw {
-  font-size: 0.82rem; font-weight: 760;
+#slide-4 .prog-num {
+  min-width: 2.5rem;
   text-align: right;
+  font-size: 0.68rem;
+  font-weight: 760;
+  font-variant-numeric: tabular-nums;
+  color: rgba(244, 244, 242, 0.55);
+  white-space: nowrap;
+}
+
+/* ----- 우 · 예측 전력 사용량 (카운트업) ----- */
+#slide-4 .output {
+  position: relative; z-index: 2;
+  width: clamp(13.5rem, 24vw, 18.5rem);
+  display: flex; flex-direction: column;
+  align-items: flex-start;
+}
+#slide-4 .out-label {
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  color: rgba(244, 244, 242, 0.55);
+}
+#slide-4 .out-readout {
+  display: flex; align-items: baseline;
+  gap: 0.32rem;
+  margin-top: 0.15rem;
+}
+#slide-4 .out-num {
+  font-family: 'Pretendard', sans-serif;
+  font-size: clamp(2.4rem, 4.7vw, 3.6rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.01em;
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
-#slide-4 .load-kw small {
-  font-size: 0.6rem; font-weight: 600;
-  margin-left: 0.12rem;
-  color: rgba(244, 244, 242, 0.5);
-}
-
-/* ----- 효율 게이지 ----- */
-#slide-4 .gauge {
-  position: relative;
-  margin-top: 1.05rem;
-  padding-top: 0.9rem;
-  border-top: 1px solid rgba(244, 244, 242, 0.12);
-  text-align: center;
-}
-#slide-4 .gauge-svg { display: block; width: 100%; height: 64px; }
-#slide-4 .gauge-track {
-  fill: none; stroke: rgba(244, 244, 242, 0.14);
-  stroke-width: 6; stroke-linecap: round;
-}
-#slide-4 .gauge-fill {
-  fill: none; stroke: #f4f4f2;
-  stroke-width: 6; stroke-linecap: round;
-  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.55));
-}
-#slide-4 .gauge-read {
-  position: absolute; left: 0; right: 0; top: 2.55rem;
-  display: flex; align-items: baseline; justify-content: center;
-}
-#slide-4 .gauge-num {
-  font-size: 1.7rem; font-weight: 800;
-  letter-spacing: 0;
-  font-variant-numeric: tabular-nums;
-}
-#slide-4 .gauge-unit {
-  font-size: 0.85rem; font-weight: 700;
-  margin-left: 0.1rem;
-  color: rgba(244, 244, 242, 0.6);
-}
-#slide-4 .gauge-cap {
-  display: block;
-  margin-top: 0.05rem;
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  color: rgba(244, 244, 242, 0.46);
-}
-
-/* ----- 건물 프로필 (하단 중앙) ----- */
-#slide-4 .building-profile {
-  position: absolute; left: 50%; bottom: 4%;
-  width: min(25rem, 56vw);
-  padding: 0.95rem 1.3rem;
-  transform: translateX(-50%);
-  text-align: center;
-  background: rgba(9, 9, 10, 0.62);
-  border: 1px solid rgba(244, 244, 242, 0.14);
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-}
-#slide-4 .building-profile::before,
-#slide-4 .building-profile::after {
-  content: ""; position: absolute;
-  width: 15px; height: 15px;
-  border: 1px solid rgba(244, 244, 242, 0.72);
-}
-#slide-4 .building-profile::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
-#slide-4 .building-profile::after  { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
-#slide-4 .building-profile .eyebrow {
-  display: block;
-  margin-bottom: 0.4rem;
-  font-size: 0.62rem;
+#slide-4 .out-unit {
+  font-size: clamp(1rem, 1.7vw, 1.35rem);
   font-weight: 700;
-  letter-spacing: 0.24em;
-  color: rgba(244, 244, 242, 0.46);
+  color: rgba(244, 244, 242, 0.62);
 }
-#slide-4 .building-profile strong {
+#slide-4 .forecast {
   display: block;
-  font-size: clamp(1.2rem, 2.1vw, 1.7rem);
-  font-weight: 780;
+  width: 100%;
+  height: clamp(46px, 7.5vh, 64px);
+  margin-top: 0.6rem;
 }
-#slide-4 .building-profile .profile-sub {
-  display: block;
-  margin-top: 0.32rem;
-  font-size: 0.86rem;
+#slide-4 .fc-band { fill: rgba(244, 244, 242, 0.1); stroke: none; }
+#slide-4 .fc-line {
+  fill: none;
+  stroke: rgba(244, 244, 242, 0.95);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#slide-4 .fc-dot {
+  fill: #fff;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.9));
+}
+#slide-4 .out-cap {
+  margin-top: 0.42rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
   color: var(--dim);
 }
 
-/* ----- 건물 콜아웃 (1막 — 빌딩 왼쪽 빈 공간에서 끌어나옴) ----- */
-#slide-4 .callout {
-  position: absolute; inset: 0;
-  pointer-events: none;
-}
-#slide-4 .callout-label {
-  position: absolute; left: 26.6%; top: 40%;
-  width: 11%;
-  transform: translateY(-50%);
-  text-align: right;
-}
-#slide-4 .callout-eyebrow {
-  display: block;
-  margin-bottom: 0.26rem;
-  font-size: 0.58rem; font-weight: 700;
-  letter-spacing: 0.2em;
-  color: rgba(244, 244, 242, 0.46);
-}
-#slide-4 .callout-title {
-  display: block;
-  font-size: 0.83rem; font-weight: 600;
-  line-height: 1.34;
+/* ----- 하단 킥커 ----- */
+#slide-4 .kicker {
+  position: absolute; left: 50%; bottom: 10.5%;
+  transform: translateX(-50%);
+  font-family: 'Pretendard', sans-serif;
+  font-size: clamp(1.15rem, 2.3vw, 1.6rem);
+  font-weight: 600;
   letter-spacing: 0.01em;
+  color: var(--dim);
+  white-space: nowrap;
+}
+#slide-4 .kicker .kw {
+  font-style: normal;
+  font-weight: 800;
   color: var(--text);
-}
-#slide-4 .callout-line {
-  position: absolute; top: 40%; left: 37.8%;
-  width: 3.7%; height: 1.5px;
-  margin-top: -0.75px;
-  background: linear-gradient(to left,
-    rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.28));
-}
-#slide-4 .callout-dot {
-  position: absolute; left: 41.5%; top: 40%;
-  width: 9px; height: 9px;
-  margin: -4.5px 0 0 -4.5px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 0 11px rgba(255, 255, 255, 0.9);
 }
 
 /* ============================================================
-   세로 화면 (포트레이트) — 패널을 하단으로, 겹침 방지
+   세로 화면 (포트레이트) — 파이프라인 축소
    ============================================================ */
 @media (max-aspect-ratio: 1 / 1) {
-  #slide-4 .world { top: 40%; }
-  #slide-4 .ems { top: 7%; }
-  #slide-4 .bems-kicker { top: 14.4%; font-size: 0.6rem; letter-spacing: 0.22em; }
-  #slide-4 .cems-sub { top: 15.5%; }
-  #slide-4 .cems-stats { top: 20.5%; gap: 0.6rem; }
-
-  #slide-4 .panel {
-    top: auto; bottom: 16.5%;
-    width: 46vw;
-    padding: 0.8rem 0.85rem 0.9rem;
-    transform: none;
-  }
-  #slide-4 .panel-left  { left: 2.5vw; }
-  #slide-4 .panel-right { right: 2.5vw; }
-  #slide-4 .panel-tag { margin-bottom: 0.7rem; padding-bottom: 0.45rem; }
-  #slide-4 .stat { margin-bottom: 0.6rem; }
-  #slide-4 .stat-val { font-size: 1.1rem; }
-  #slide-4 .stat-hero .stat-val { font-size: 1.4rem; }
-  #slide-4 .stat-hero { margin-bottom: 0.7rem; }
-  #slide-4 .spark { margin-top: 0.7rem; }
-  #slide-4 .spark-svg { height: 44px; }
-  #slide-4 .gauge { margin-top: 0.7rem; padding-top: 0.65rem; }
-  #slide-4 .gauge-svg { height: 52px; }
-  #slide-4 .gauge-read { top: 2rem; }
-  #slide-4 .gauge-num { font-size: 1.4rem; }
-
-  #slide-4 .building-profile {
-    bottom: 3.5%;
-    width: 84vw;
-    padding: 0.7rem 1rem;
-  }
-
-  /* 콜아웃 — 세로 화면: 빌딩 왼쪽 빈 공간으로 재배치 */
-  #slide-4 .callout-label { left: 4%; width: 26%; top: 29%; }
-  #slide-4 .callout-line  { left: 30.5%; width: 4.5%; top: 29%; }
-  #slide-4 .callout-dot   { left: 35%; top: 29%; }
+  #slide-4 .pipeline { width: 95vw; }
+  #slide-4 .inputs { width: 37vw; gap: 1.2rem; }
+  #slide-4 .chip { font-size: 0.76rem; padding: 0.36rem 0.72rem; }
+  #slide-4 .chips { gap: 0.4rem; }
+  #slide-4 .wt { font-size: 0.74rem; min-width: 2.6rem; }
+  #slide-4 .vgroup-label { font-size: 0.6rem; margin-bottom: 0.5rem; }
+  #slide-4 .ml { width: 30vw; }
+  #slide-4 .matrix { gap: 4px; }
+  #slide-4 .wcell { font-size: 0.52rem; }
+  #slide-4 .output { width: 31vw; }
+  #slide-4 .out-label { font-size: 0.72rem; }
+  #slide-4 .eyebrow { top: 7.5%; }
+  #slide-4 .kicker { bottom: 8.5%; }
 }
