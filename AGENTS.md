@@ -59,12 +59,10 @@
 │   └── progress.md
 ├── css/
 │   ├── base.css                   ← 폰트·리셋·전역변수·덱 레이아웃(scroll-snap)
-│   ├── slide-1.css                ← 슬라이드 1 전용 스타일
-│   └── slide-2.css                ← 슬라이드 2 전용 스타일
+│   └── slide-1.css … slide-8.css  ← 슬라이드별 전용 스타일 (#slide-N 으로 스코프)
 ├── js/
 │   ├── main.js                    ← 부트스트랩 (슬라이드 초기화·내비게이션)
-│   ├── slide-1.js                 ← 슬라이드 1 애니메이션 (AiceSlide1)
-│   └── slide-2.js                 ← 슬라이드 2 애니메이션 (AiceSlide2)
+│   └── slide-1.js … slide-8.js    ← 슬라이드별 애니메이션 (AiceSlideN)
 ├── vendor/
 │   └── gsap.min.js                ← GSAP (로컬)
 └── assets/

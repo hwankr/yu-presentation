@@ -1,24 +1,23 @@
 /* ============================================================
-   slide-7.css — 슬라이드 7 (SWOT 분석)
-   2×2 매트릭스. 강점·기회(긍정)는 솔리드, 약점·위협(부정)은
-   윤곽선 — 색이 아닌 형태 대비로 사분면을 구분한다.
+   slide-7.css — 슬라이드 7 (측정 · 피터 드러커 인용)
+   좌: 흑백 인물 사진(현상) · 우: 인용구(측정→관리→개선 체인 점화)
    ============================================================ */
 
 #slide-7 { background: var(--bg); }
 
-/* ----- 배경 (슬라이드 1~6 톤 재사용) ----- */
+/* ----- 배경 (슬라이드 1~5 톤 재사용 · 스포트라이트는 사진 쪽으로) ----- */
 #slide-7 .bg { position: absolute; inset: 0; z-index: 0; }
 
 #slide-7 .bg-spot {
-  position: absolute; left: 50%; top: 50%;
-  width: 1300px; height: 1300px;
+  position: absolute; left: 30%; top: 50%;
+  width: 1200px; height: 1200px;
   transform: translate(-50%, -50%);
   background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 64%);
 }
 
 #slide-7 .bg-vignette {
   position: absolute; inset: 0;
-  background: radial-gradient(circle at 50% 50%, transparent 30%, rgba(0,0,0,0.68) 100%);
+  background: radial-gradient(circle at 35% 50%, transparent 32%, rgba(0,0,0,0.62) 100%);
 }
 
 #slide-7 .particles { position: absolute; inset: 0; }
@@ -27,227 +26,105 @@
   border-radius: 50%; background: #fff;
 }
 
-/* ----- 무대 ----- */
-#slide-7 .stage { position: relative; z-index: 2; height: 100%; }
-
-/* ----- 상단 eyebrow ----- */
-#slide-7 .eyebrow {
-  position: absolute; left: 50%; top: 4%;
-  transform: translateX(-50%);
-  font-family: 'Pretendard', sans-serif;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.34em;
-  color: rgba(244, 244, 242, 0.5);
-  white-space: nowrap;
+/* ----- 무대 — 좌우 분할 ----- */
+#slide-7 .stage {
+  position: relative; z-index: 2; height: 100%;
+  display: flex; align-items: center;
 }
 
-/* ============================================================
-   SWOT 매트릭스 — 2×2 그리드
-   ============================================================ */
-#slide-7 .swot {
-  position: absolute; left: 50%; top: 49.5%;
-  transform: translate(-50%, -50%);
-  width: min(1180px, 92vw);
-  height: min(80vh, 680px);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-}
-
-/* 외곽 프레임 · 십자 분할선 · 중심 노드 — 애니메이션 대상, 사분면 위에 그려진다 */
-#slide-7 .swot-frame {
-  position: absolute; inset: 0;
-  z-index: 3;
-  border: 1px solid rgba(244, 244, 242, 0.16);
-  pointer-events: none;
-}
-#slide-7 .div-h {
-  position: absolute; left: 0; right: 0; top: 50%;
-  z-index: 3;
-  height: 1px;
-  background: rgba(244, 244, 242, 0.16);
-  transform: scaleX(0);
-  transform-origin: 50% 50%;
-  pointer-events: none;
-}
-#slide-7 .div-v {
-  position: absolute; top: 0; bottom: 0; left: 50%;
-  z-index: 3;
-  width: 1px;
-  background: rgba(244, 244, 242, 0.16);
-  transform: scaleY(0);
-  transform-origin: 50% 50%;
-  pointer-events: none;
-}
-#slide-7 .node {
-  position: absolute; left: 50%; top: 50%;
-  z-index: 4;
-  width: 7px; height: 7px;
-  background: var(--text);
-  transform: translate(-50%, -50%) rotate(45deg) scale(0);
-  box-shadow: 0 0 12px rgba(255, 255, 255, 0.55);
-  pointer-events: none;
-}
-
-/* ----- 사분면 카드 ----- */
-#slide-7 .quad {
+/* ----- 좌: 인물 사진 ----- */
+#slide-7 .portrait {
   position: relative;
+  flex: 0 0 42%;
+  height: 100%;
   overflow: hidden;
-  padding: clamp(1.3rem, 3.6vh, 2.4rem) clamp(1.5rem, 3vw, 2.4rem);
-  display: flex;
-  flex-direction: column;
-  cursor: pointer;
-  box-shadow: 0 0 0 0 rgba(244, 244, 242, 0);   /* 클릭 시 테두리 링으로 트윈 */
-  will-change: transform, opacity;
+  background: #101012;            /* 사진이 없을 때 어둠으로 우아하게 대체 */
 }
-
-/* 큰 고스트 글자 (S/W/O/T) — 카드 우하단, 일부 잘림 */
-#slide-7 .ghost {
-  position: absolute;
-  right: -0.05em; bottom: -0.24em;
-  z-index: 1;
-  font-family: 'Fraunces', serif;
-  font-size: clamp(7rem, 15vw, 13rem);
-  font-weight: 600;
-  line-height: 1;
-  user-select: none;
+#slide-7 .portrait-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: 50% 30%;       /* 얼굴 기준 크롭 */
+  filter: grayscale(1) brightness(0.85) contrast(1.04);
+  will-change: filter, opacity, transform;
+}
+/* 사방 비네팅 — 안쪽(우측) 가장자리를 검정으로 페이드해 분할선을 지움 */
+#slide-7 .portrait-fade {
+  position: absolute; inset: 0;
   pointer-events: none;
-  will-change: transform;
-}
-#slide-7 .quad[data-tone="pos"] .ghost {
-  color: rgba(244, 244, 242, 0.15);
-}
-#slide-7 .quad[data-tone="neg"] .ghost {
-  color: transparent;
-  -webkit-text-stroke: 1.5px rgba(244, 244, 242, 0.22);
-}
-
-/* ----- 사분면 헤더 — 배지 + 라벨 ----- */
-#slide-7 .quad-head {
-  position: relative; z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 0.72rem;
-}
-#slide-7 .badge {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.8rem; height: 2.8rem;
-  font-family: 'Fraunces', serif;
-  font-size: 1.58rem;
-  font-weight: 600;
-  line-height: 1;
-  will-change: transform, opacity;
-}
-/* 긍정 — 솔리드 배지 / 부정 — 윤곽선 배지 (형태 대비) */
-#slide-7 .quad[data-tone="pos"] .badge {
-  background: var(--text);
-  color: var(--bg);
-}
-#slide-7 .quad[data-tone="neg"] .badge {
-  border: 1px solid rgba(244, 244, 242, 0.55);
-  color: var(--text);
+  background:
+    linear-gradient(to right,
+      rgba(10,10,11,0.55) 0%, transparent 14%,
+      transparent 58%, var(--bg) 100%),
+    linear-gradient(to bottom,
+      rgba(10,10,11,0.5) 0%, transparent 22%,
+      transparent 78%, rgba(10,10,11,0.62) 100%);
 }
 
-#slide-7 .quad-titles {
-  display: flex;
-  flex-direction: column;
-  gap: 0.12rem;
-}
-#slide-7 .quad-ko {
-  font-family: 'Pretendard', sans-serif;
-  font-size: 1.22rem;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  line-height: 1.1;
-  color: var(--text);
-}
-#slide-7 .quad-en {
-  font-size: 0.6rem;
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(244, 244, 242, 0.42);
+/* ----- 우: 인용구 ----- */
+#slide-7 .quote {
+  flex: 1 1 58%;
+  padding: 0 4vw 0 5vw;
+  max-width: 64ch;
 }
 
-/* ----- 항목 리스트 ----- */
-#slide-7 .items {
-  position: relative; z-index: 2;
-  list-style: none;
-  margin-top: clamp(1rem, 2.6vh, 1.6rem);
-  display: flex;
-  flex-direction: column;
-  gap: clamp(0.6rem, 1.7vh, 1rem);
+/* 출처 라벨 — 슬라이드 1 .label 톤 */
+#slide-7 .attr { margin-bottom: 2.4rem; }
+#slide-7 .attr-name {
+  display: block;
+  font-size: 0.78rem; letter-spacing: 0.42em; text-transform: uppercase;
+  color: var(--text); font-weight: 600;
 }
-#slide-7 .item {
+#slide-7 .attr-role {
+  display: block; margin-top: 0.5rem;
+  font-size: 0.86rem; letter-spacing: 0.02em;
+  color: var(--dim); font-weight: 400;
+}
+#slide-7 .attr-rule {
+  display: block; margin-top: 1.1rem;
+  width: 3.2rem; height: 1px;       /* JS가 0 → 이 너비로 그음 */
+  background: rgba(244, 244, 242, 0.22);
+}
+
+/* 히어로 인용구 — 본문은 흐리게, 체인 단어만 솔리드. 각 문장은 한 줄에 들어간다. */
+#slide-7 .saying {
   position: relative;
-  padding-left: 0.95rem;
-  will-change: transform, opacity;
-}
-/* 항목 마커 — 긍정은 채움, 부정은 윤곽선 (형태 대비) */
-#slide-7 .item::before {
-  content: "";
-  position: absolute;
-  left: 0; top: 0.4em;
-  width: 6px; height: 6px;
-}
-#slide-7 .quad[data-tone="pos"] .item::before {
-  background: rgba(244, 244, 242, 0.78);
-}
-#slide-7 .quad[data-tone="neg"] .item::before {
-  border: 1px solid rgba(244, 244, 242, 0.5);
-}
-#slide-7 .item-lead {
-  display: block;
-  font-size: 1.05rem;
-  font-weight: 700;
-  letter-spacing: 0.005em;
-  line-height: 1.3;
-  color: var(--text);
-}
-#slide-7 .item-sub {
-  display: block;
-  margin-top: 0.1rem;
-  font-size: 0.84rem;
-  font-weight: 400;
-  letter-spacing: 0.005em;
-  line-height: 1.4;
-  color: rgba(244, 244, 242, 0.46);
-}
-
-/* ----- 하단 킥커 ----- */
-#slide-7 .kicker {
-  position: absolute; left: 50%; bottom: 4%;
-  transform: translateX(-50%);
   font-family: 'Pretendard', sans-serif;
-  font-size: clamp(1.05rem, 2.1vw, 1.45rem);
-  font-weight: 600;
-  letter-spacing: 0.01em;
+  font-weight: 500;
+  font-size: clamp(1.6rem, 2.8vw, 2.7rem);
+  line-height: 1.5;
+  letter-spacing: -0.014em;
   color: var(--dim);
-  white-space: nowrap;
 }
-#slide-7 .kicker .kw {
+#slide-7 .saying .line { display: block; white-space: nowrap; }
+
+/* 큰 따옴표 — 은은한 장식 */
+#slide-7 .saying .mark {
+  position: absolute;
+  left: -0.6em; top: -0.34em;
+  font-family: 'Fraunces', serif;
+  font-size: 2.2em; line-height: 1;
+  color: rgba(244, 244, 242, 0.1);
+  pointer-events: none;
+}
+
+/* 체인 키워드 — 측정 · 관리 · 개선 (JS가 흐림 → 솔리드+글로우 점화) */
+#slide-7 .saying .kw {
+  display: inline-block;            /* scale 펄스를 위해 */
   font-style: normal;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--text);
 }
 
-/* ============================================================
-   세로 화면 (포트레이트) — 매트릭스 축소
-   ============================================================ */
+/* ----- 좁은/세로 화면 폴백 — 위아래로 쌓음 ----- */
 @media (max-aspect-ratio: 1 / 1) {
-  #slide-7 .swot { width: 94vw; height: 78vh; }
-  #slide-7 .quad { padding: 1.15rem 1.15rem; }
-  #slide-7 .ghost { font-size: 22vw; }
-  #slide-7 .badge { width: 2.05rem; height: 2.05rem; font-size: 1.18rem; }
-  #slide-7 .quad-ko { font-size: 1rem; }
-  #slide-7 .quad-en { font-size: 0.55rem; letter-spacing: 0.16em; }
-  #slide-7 .items { margin-top: 0.7rem; gap: 0.4rem; }
-  #slide-7 .item-lead { font-size: 0.84rem; }
-  #slide-7 .item-sub { font-size: 0.7rem; }
-  #slide-7 .eyebrow { top: 5%; }
-  #slide-7 .kicker { bottom: 4.5%; font-size: 1.05rem; }
+  #slide-7 .stage { flex-direction: column; }
+  #slide-7 .portrait { flex: 0 0 42%; width: 100%; }
+  #slide-7 .portrait-fade {
+    background:
+      linear-gradient(to bottom,
+        rgba(10,10,11,0.5) 0%, transparent 20%,
+        transparent 56%, var(--bg) 100%);
+  }
+  #slide-7 .quote { flex: 0 0 auto; padding: 2.2rem 8vw; }
+  #slide-7 .attr { margin-bottom: 1.4rem; }
 }

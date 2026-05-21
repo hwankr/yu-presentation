@@ -14,6 +14,7 @@
     AiceSlide5.init();
     AiceSlide6.init();
     AiceSlide7.init();
+    AiceSlide8.init();
   });
 
   /* ----- 슬라이드 목록 · 현재 위치 ----- */
@@ -39,10 +40,11 @@
     list[next].scrollIntoView({ behavior: 'smooth' });
   }
 
-  /* ----- 슬라이드 내부 단계 진행 (예: 슬라이드 3의 B-EMS→C-EMS) ----- */
+  /* ----- 슬라이드 내부 단계 진행 (슬라이드 3의 가계부 3단계, 슬라이드 4의 B-EMS→C-EMS) ----- */
   function advanceCurrent() {
     var id = slides()[currentIndex()].id;
     if (id === 'slide-3') return AiceSlide3.advance();
+    if (id === 'slide-4') return AiceSlide4.advance();
     return false;
   }
 
@@ -91,6 +93,7 @@
       else if (id === 'slide-5') AiceSlide5.replay();
       else if (id === 'slide-6') AiceSlide6.replay();
       else if (id === 'slide-7') AiceSlide7.replay();
+      else if (id === 'slide-8') AiceSlide8.replay();
     }
   });
 })();

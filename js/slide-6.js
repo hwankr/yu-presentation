@@ -1,26 +1,51 @@
 /* ============================================================
-   slide-6.js — 슬라이드 6 (측정 · 피터 드러커 인용) 애니메이션
-   어둠 속에서 인물 사진이 서서히 현상되고 →
-   인용구의 "측정 → 관리 → 개선"이 한 단어씩 점화 →
-   인용구는 가라앉고 "측정"이 절약의 출발점으로 남는다.
+   slide-6.js — 슬라이드 6 (현장 적용 · Before → After 전환)
+   학교 시설팀 인터뷰로 검증한 활용 효과가 자동 재생된다.
+   eyebrow → 인터뷰 출처 앵커 → 전환 행(현재 윤곽선 → 화살표
+   드로잉 → Campus-EMS 솔리드 점화) → 향후 방향 밴드 → 킥커.
+   끝까지 남는 키워드는 "운영".
    전역 객체 AiceSlide6 { init, replay } 노출
    ============================================================ */
 window.AiceSlide6 = (function () {
   'use strict';
 
-  var tl;                // 메인 타임라인
+  /* ----- 전환 행 (편집 가능) — 현재 방식 → Campus-EMS 적용 ----- */
+  var ROWS = [
+    {
+      cat: '공용 전자기기 운영',
+      now: { main: '기온 30°C 이상 · 3일 연속', sub: '고정된 가동 기준 — 잦은 민원' },
+      ems: { main: '상황을 읽는 유연한 운영',    sub: '합리적인 공용기기 제어' }
+    },
+    {
+      cat: '피크 전력 관리',
+      now: { main: '건물별 순환 전원 차단',      sub: '일괄적이고 단순한 차단 방식' },
+      ems: { main: '예측 기반 정교한 제어',      sub: '전력 사용량 예측으로 제어 로직 설계' }
+    }
+  ];
+
+  /* ----- 향후 방향 단계 (편집 가능) ----- */
+  var FUTURE = [
+    { n: '01', title: '학생에게 대시보드 공개', sub: '시설팀 전용 → 모두에게' },
+    { n: '02', title: '건물별 사용량 비교',     sub: '선의의 경쟁을 유도' },
+    { n: '03', title: '인센티브로 능동적 절감', sub: '스스로 줄이는 캠퍼스' }
+  ];
+
+  /* ----- 타임라인 비트 (초, 편집 가능) ----- */
+  var ROW_AT    = [1.15, 2.7];   // 각 전환 행 등장 시점
+  var FUTURE_AT = 4.5;           // 향후 방향 밴드 등장
+  var KICK_AT   = 6.05;          // 마무리 킥커
+
+  var tl;
   var played = false;
+  var ambient = [];
 
-  var OFF_GLOW = 'drop-shadow(0 0 0px rgba(255,255,255,0))';      // 점화 전
-  var KW_GLOW  = 'drop-shadow(0 0 14px rgba(255,255,255,0.45))';  // 점화 후
-
-  var IMG_DARK = 'grayscale(1) brightness(0.12) contrast(1.04)';  // 현상 전
-  var IMG_LIT  = 'grayscale(1) brightness(0.85) contrast(1.04)';  // 현상 후
-
-  /* ----- 배경 파티클 (슬라이드 1·2 패턴) ----- */
+  /* ============================================================
+     배경 입자
+     ============================================================ */
   function makeParticles() {
     var pc = document.getElementById('s6-particles');
     if (!pc) return;
+    pc.innerHTML = '';
     for (var i = 0; i < 14; i++) {
       var p = document.createElement('div');
       p.className = 'particle';
@@ -39,94 +64,199 @@ window.AiceSlide6 = (function () {
     }
   }
 
-  /* ----- 사진 로드 실패 시 깨진 아이콘을 숨김(좌측 패널은 어둠으로 대체) ----- */
-  function guardImage() {
-    var img = document.querySelector('#slide-6 .portrait-img');
-    if (!img) return;
-    function hide() { img.style.display = 'none'; }
-    img.addEventListener('error', hide);
-    // 리스너 등록 전에 이미 로드가 끝나 실패한 경우(naturalWidth 0)도 처리
-    if (img.complete && img.naturalWidth === 0) hide();
-  }
-
-  /* ----- 키워드 한 묶음 점화 — 흐림 → 솔리드 흰색 + 글로우 + 미세 펄스 ----- */
-  function ignite(timeline, els, at) {
-    if (!els || !els.length) return;
-    timeline.to(els, {
-      color: 'rgba(244,244,242,1)', filter: KW_GLOW,
-      duration: 0.5, ease: 'power2.out'
-    }, at);
-    timeline.fromTo(els, { scale: 1 }, {
-      scale: 1.07, duration: 0.2, ease: 'power2.out',
-      yoyo: true, repeat: 1
-    }, at);
-  }
-
-  /* ----- 타임라인 ----- */
-  function build() {
-    var img    = document.querySelector('#slide-6 .portrait-img');
-    var spot   = document.querySelector('#slide-6 .bg-spot');
-    var rule   = document.querySelector('#slide-6 .attr-rule');
-    var attrEl = document.querySelectorAll('#slide-6 .attr-name, #slide-6 .attr-role');
-    var mark   = document.querySelector('#slide-6 .saying .mark');
-    var lines  = document.querySelectorAll('#slide-6 .saying .line');
-    var saying = document.querySelector('#slide-6 .saying');
-
-    var kwAll     = document.querySelectorAll('#slide-6 .saying .kw');
-    var kwMeasure = document.querySelectorAll('#slide-6 .saying .kw[data-kw="measure"]');
-    var kwManage  = document.querySelectorAll('#slide-6 .saying .kw[data-kw="manage"]');
-    var kwImprove = document.querySelectorAll('#slide-6 .saying .kw[data-kw="improve"]');
-
-    if (!saying) return;
-    if (tl) tl.kill();
-
-    /* ----- 초기 상태 (현상 전 · 점화 전) ----- */
-    if (img) gsap.set(img, { opacity: 0, scale: 1.06, filter: IMG_DARK });
-    gsap.set(spot, { opacity: 0.55 });
-    gsap.set(rule, { width: 0 });
-    gsap.set(attrEl, { opacity: 0, y: 12 });
-    gsap.set(mark, { opacity: 0, y: 10 });
-    gsap.set(lines, { opacity: 0, y: 26 });
-    gsap.set(kwAll, { color: 'rgba(244,244,242,0.42)', filter: OFF_GLOW });
-
-    tl = gsap.timeline({ paused: true, defaults: { ease: 'power3.out' } });
-
-    /* 1) 현상 — 사진이 어둠 속에서 서서히 인화된다 */
-    if (img) {
-      tl.to(img, { opacity: 1, duration: 1.3, ease: 'power2.out' }, 0);
-      tl.to(img, { filter: IMG_LIT, duration: 1.95, ease: 'power2.out' }, 0);
-      tl.to(img, { scale: 1, duration: 2.2, ease: 'expo.out' }, 0);
+  /* ============================================================
+     전환 행 DOM 생성 — ROWS 배열로 현재·Campus-EMS 카드를 채운다
+     ============================================================ */
+  function buildRows() {
+    var host = document.getElementById('s6-rows');
+    if (!host) return;
+    host.innerHTML = '';
+    for (var i = 0; i < ROWS.length; i++) {
+      var r = ROWS[i];
+      var row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML =
+        '<span class="row-cat">' + r.cat + '</span>' +
+        '<div class="row-body">' +
+          '<div class="card card-now">' +
+            '<span class="card-tag">현재</span>' +
+            '<strong class="card-main">' + r.now.main + '</strong>' +
+            '<span class="card-sub">' + r.now.sub + '</span>' +
+          '</div>' +
+          '<svg class="row-arrow" viewBox="0 0 96 28" aria-hidden="true">' +
+            '<path class="arrow-path" d="M 8,14 L 82,14 L 70,7 L 82,14 L 70,21"/>' +
+          '</svg>' +
+          '<div class="card card-ems">' +
+            '<span class="card-tag">Campus-EMS 적용</span>' +
+            '<strong class="card-main">' + r.ems.main + '</strong>' +
+            '<span class="card-sub">' + r.ems.sub + '</span>' +
+          '</div>' +
+        '</div>';
+      host.appendChild(row);
     }
-    tl.to(spot, { opacity: 0.8, duration: 2.0, ease: 'power2.out' }, 0.2);
+  }
 
-    /* 2) 라벨 — 출처가 떠오르고 룰 라인이 그어진다 */
-    tl.to(attrEl, { opacity: 1, y: 0, duration: 0.7, stagger: 0.12 }, 1.15);
-    tl.to(rule, { width: '3.2rem', duration: 0.7, ease: 'power2.inOut' }, 1.4);
+  /* ============================================================
+     향후 방향 밴드 DOM 생성 — FUTURE 배열로 단계를 채운다
+     ============================================================ */
+  function buildFuture() {
+    var host = document.getElementById('s6-future-track');
+    if (!host) return;
+    host.innerHTML = '';
+    for (var i = 0; i < FUTURE.length; i++) {
+      if (i > 0) {
+        var sep = document.createElement('span');
+        sep.className = 'fsep';
+        sep.setAttribute('aria-hidden', 'true');
+        sep.textContent = '▸';
+        host.appendChild(sep);
+      }
+      var f = FUTURE[i];
+      var step = document.createElement('div');
+      step.className = 'fstep';
+      step.innerHTML =
+        '<span class="fnum">' + f.n + '</span>' +
+        '<div class="ftext">' +
+          '<strong class="ftitle">' + f.title + '</strong>' +
+          '<span class="fsub">' + f.sub + '</span>' +
+        '</div>';
+      host.appendChild(step);
+    }
+  }
 
-    /* 3) 인용구 본문 — 따옴표와 줄이 스르륵 떠오른다 */
-    tl.to(mark, { opacity: 1, y: 0, duration: 0.7 }, 1.6);
-    tl.to(lines, { opacity: 1, y: 0, duration: 0.9, stagger: 0.22 }, 1.75);
+  /* ============================================================
+     타임라인
+     ============================================================ */
+  function build() {
+    var eyebrow     = document.getElementById('s6-eyebrow');
+    var spot        = document.querySelector('#slide-6 .bg-spot');
+    var credLine    = document.querySelector('#s6-cred .cred-line');
+    var credSub     = document.querySelector('#s6-cred .cred-sub');
+    var rows        = document.querySelectorAll('#s6-rows .row');
+    var future      = document.getElementById('s6-future');
+    var futureLabel = document.querySelector('#s6-future .future-label');
+    var fsteps      = document.querySelectorAll('#s6-future .fstep');
+    var fseps       = document.querySelectorAll('#s6-future .fsep');
+    var kicker      = document.getElementById('s6-kicker');
+    var kw          = document.querySelector('#slide-6 .kicker .kw');
+    if (!rows.length || !future) return;
 
-    /* 4) 체인 점화 — 측정 → 관리 → 개선. 세 단어가 모두 켜진 채 마무리된다. */
-    tl.addLabel('chain', 2.95);
-    ignite(tl, kwMeasure, 'chain');
-    ignite(tl, kwManage,  'chain+=0.55');
-    ignite(tl, kwImprove, 'chain+=1.1');
+    if (tl) tl.kill();
+    killAmbient();
+
+    /* ----- 초기 상태 ----- */
+    gsap.set(spot, { opacity: 0.5 });
+    gsap.set(eyebrow, { opacity: 0, y: -8 });
+    gsap.set(credLine, { opacity: 0, y: 8 });
+    gsap.set(credSub, { opacity: 0 });
+    gsap.set(future, { opacity: 0, y: 14 });
+    gsap.set(futureLabel, { opacity: 0 });
+    gsap.set(fsteps, { opacity: 0, y: 10 });
+    gsap.set(fseps, { opacity: 0, scale: 0.5 });
+    gsap.set(kicker, { opacity: 0, y: 10 });
+    gsap.set(kw, { filter: 'drop-shadow(0 0 0px rgba(255,255,255,0))' });
+
+    var i;
+    for (i = 0; i < rows.length; i++) {
+      var cat   = rows[i].querySelector('.row-cat');
+      var now   = rows[i].querySelector('.card-now');
+      var ems   = rows[i].querySelector('.card-ems');
+      var arrow = rows[i].querySelector('.arrow-path');
+      gsap.set(cat, { opacity: 0, y: -6 });
+      gsap.set(now, { opacity: 0, y: 12 });
+      gsap.set(ems, { opacity: 0, y: 12, '--emsglow': 0 });
+      var len = arrow.getTotalLength ? arrow.getTotalLength() : 116;
+      gsap.set(arrow, { strokeDasharray: len, strokeDashoffset: len });
+    }
+
+    /* ----- 타임라인 ----- */
+    tl = gsap.timeline({
+      paused: true,
+      defaults: { ease: 'power3.out' },
+      onComplete: startAmbient
+    });
+
+    /* 1) eyebrow */
+    tl.to(eyebrow, { opacity: 1, y: 0, duration: 0.7 }, 0);
+
+    /* 2) 인터뷰 출처 앵커 — 현장 검증의 신뢰 도장 */
+    tl.to(credLine, { opacity: 1, y: 0, duration: 0.7 }, 0.35);
+    tl.to(credSub, { opacity: 1, duration: 0.6 }, 0.72);
+
+    /* 3) 전환 행 — 현재(윤곽선) → 화살표 → Campus-EMS(솔리드 점화) */
+    for (i = 0; i < rows.length; i++) {
+      revealRow(tl, rows[i], ROW_AT[i]);
+    }
+
+    /* 4) 향후 방향 밴드 — 3단계 좌→우 캐스케이드 */
+    tl.to(future, { opacity: 1, y: 0, duration: 0.7, ease: 'power2.out' }, FUTURE_AT);
+    tl.to(futureLabel, { opacity: 1, duration: 0.45 }, FUTURE_AT + 0.15);
+    tl.to(fsteps, { opacity: 1, y: 0, duration: 0.55, stagger: 0.34 }, FUTURE_AT + 0.32);
+    tl.to(fseps, { opacity: 1, scale: 1, duration: 0.4, stagger: 0.34 }, FUTURE_AT + 0.5);
+
+    /* 5) 마무리 킥커 — "운영" 솔리드 강조 */
+    tl.to(kicker, { opacity: 1, y: 0, duration: 0.85 }, KICK_AT);
+    tl.to(kw, {
+      filter: 'drop-shadow(0 0 14px rgba(255,255,255,0.42))',
+      duration: 0.9, ease: 'power2.out'
+    }, KICK_AT + 0.15);
 
     return tl;
   }
 
-  /* ----- 뷰포트 진입 시 1회 재생 ----- */
+  /* 전환 행 한 줄 — 행 라벨 → 현재 카드 → 화살표 드로잉 → Campus-EMS 점화 */
+  function revealRow(timeline, row, at) {
+    var cat   = row.querySelector('.row-cat');
+    var now   = row.querySelector('.card-now');
+    var ems   = row.querySelector('.card-ems');
+    var arrow = row.querySelector('.arrow-path');
+
+    timeline.to(cat, { opacity: 1, y: 0, duration: 0.5 }, at);
+    timeline.to(now, { opacity: 1, y: 0, duration: 0.62 }, at + 0.16);
+    timeline.to(arrow, {
+      strokeDashoffset: 0, duration: 0.55, ease: 'power2.inOut'
+    }, at + 0.6);
+    timeline.to(ems, { opacity: 1, y: 0, duration: 0.62 }, at + 1.02);
+    /* 솔리드 점화 — 글로우 섬광 후 은은하게 안정 */
+    timeline.to(ems, { '--emsglow': 0.85, duration: 0.32, ease: 'power2.out' }, at + 1.12);
+    timeline.to(ems, { '--emsglow': 0.3,  duration: 0.7,  ease: 'power2.out' }, at + 1.44);
+  }
+
+  /* ============================================================
+     앰비언트 모션 — 재생 종료 후 Campus-EMS 카드가 은은히 호흡
+     ============================================================ */
+  function startAmbient() {
+    killAmbient();
+    var emsCards = document.querySelectorAll('#s6-rows .card-ems');
+    if (emsCards.length) {
+      ambient.push(gsap.to(emsCards, {
+        '--emsglow': 0.14,
+        duration: 2.2, ease: 'sine.inOut',
+        yoyo: true, repeat: -1,
+        stagger: { each: 0.6, from: 'start' }
+      }));
+    }
+  }
+
+  function killAmbient() {
+    for (var i = 0; i < ambient.length; i++) ambient[i].kill();
+    ambient = [];
+  }
+
+  /* ============================================================
+     재생 제어
+     ============================================================ */
   function play() {
-    if (!tl || played) return;
+    if (played) return;
     played = true;
-    tl.play(0);
+    build();
+    if (tl) tl.play(0);
   }
 
   function observe() {
     var el = document.getElementById('slide-6');
     if (!el) return;
-    if (!('IntersectionObserver' in window)) { play(); return; }   // 폴백
+    if (!('IntersectionObserver' in window)) { play(); return; }
     var io = new IntersectionObserver(function (entries) {
       for (var i = 0; i < entries.length; i++) {
         if (entries[i].isIntersecting && entries[i].intersectionRatio >= 0.55) {
@@ -141,12 +271,13 @@ window.AiceSlide6 = (function () {
 
   /* ----- 공개 API ----- */
   function setup() {
-    build();
+    buildRows();
+    buildFuture();
+    build();        // 초기 상태(숨김) 적용
     observe();
   }
   function init() {
     makeParticles();
-    guardImage();
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(setup);
     } else {
@@ -155,7 +286,7 @@ window.AiceSlide6 = (function () {
   }
   function replay() {
     played = false;
-    build();
+    killAmbient();
     play();
   }
 
