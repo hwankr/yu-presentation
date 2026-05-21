@@ -52,3 +52,17 @@ body {
   overflow: hidden;
   scroll-snap-align: start;
 }
+
+/* ----- 오프닝 커튼 ----- */
+#curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #000;
+  opacity: 1;
+  transition: opacity 0.8s ease;
+}
+#curtain.lift {
+  opacity: 0;
+  pointer-events: none;
+}

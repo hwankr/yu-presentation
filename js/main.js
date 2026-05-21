@@ -12,6 +12,7 @@
     AiceSlide3.init();
     AiceSlide4.init();
     AiceSlide5.init();
+    AiceSlide6.init();
   });
 
   /* ----- 슬라이드 목록 · 현재 위치 ----- */
@@ -44,10 +45,35 @@
     return false;
   }
 
+  /* ----- 오프닝 커튼 ----- */
+  var curtain = document.getElementById('curtain');
+  var curtainUp = !!curtain;   // 커튼이 떠 있는 상태(발표 시작 전)
+
+  function liftCurtain() {
+    if (!curtainUp) return;
+    curtainUp = false;
+    if (curtain) {
+      curtain.classList.add('lift');
+      setTimeout(function () {
+        if (curtain && curtain.parentNode) curtain.parentNode.removeChild(curtain);
+      }, 900);
+    }
+    AiceSlide1.start();   // 슬라이드 1 인트로 애니메이션 시작
+  }
+
   /* ----- 키보드: 발표자 조작 ----- */
   window.addEventListener('keydown', function (e) {
     if (!e.key) return;
     var k = e.key;
+    // 커튼이 떠 있으면 — 첫 입력은 커튼을 걷어 발표를 시작한다
+    if (curtainUp) {
+      if (k === ' ' || k === 'Enter' || k === 'ArrowRight' ||
+          k === 'ArrowDown' || k === 'PageDown') {
+        e.preventDefault();
+        liftCurtain();
+      }
+      return;
+    }
     if (k === 'ArrowDown' || k === 'ArrowRight' || k === 'PageDown' || k === ' ') {
       e.preventDefault();
       if (advanceCurrent()) return;   // 내부 단계가 있으면 슬라이드 이동 보류
@@ -62,6 +88,7 @@
       else if (id === 'slide-3') AiceSlide3.replay();
       else if (id === 'slide-4') AiceSlide4.replay();
       else if (id === 'slide-5') AiceSlide5.replay();
+      else if (id === 'slide-6') AiceSlide6.replay();
     }
   });
 })();

@@ -5,7 +5,8 @@
 window.AiceSlide1 = (function () {
   'use strict';
 
-  var tl;   // 인트로 타임라인
+  var tl;                 // 인트로 타임라인
+  var wantStart = false;  // 타임라인 준비 전에 start() 가 호출됐는지
 
   /* ----- 배경 파티클 ----- */
   function makeParticles() {
@@ -49,7 +50,7 @@ window.AiceSlide1 = (function () {
 
     var iW = letterI.getBoundingClientRect().width;   // "i" 너비 = 벌어질 간격
 
-    tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    tl = gsap.timeline({ defaults: { ease: 'power3.out' }, paused: true });
     tl
       .to('#slide-1 .stage', { opacity: 1, duration: 0.5 })
       // 1) "Ace" 가 윤곽선으로 스르륵 떠오름
@@ -77,6 +78,7 @@ window.AiceSlide1 = (function () {
       .from('#slide-1 .tagline', { y:  16, opacity: 0, duration: 1.0 }, '<0.12')
       .from('#slide-1 .member',  { y:  22, opacity: 0, duration: 0.85, stagger: 0.1 }, '<0.28');
 
+    if (wantStart) tl.play(0);   // 커튼이 이미 걷혔다면 곧바로 재생
     return tl;
   }
 
@@ -89,7 +91,12 @@ window.AiceSlide1 = (function () {
       build();
     }
   }
+  /* 커튼이 걷힐 때 호출 — 인트로 애니메이션을 처음부터 재생한다 */
+  function start() {
+    wantStart = true;
+    if (tl) tl.play(0);
+  }
   function replay() { if (tl) tl.restart(); }
 
-  return { init: init, replay: replay };
+  return { init: init, start: start, replay: replay };
 })();

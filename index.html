@@ -5,14 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
   <title>Aice</title>
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/slide-1.css">
-  <link rel="stylesheet" href="css/slide-2.css">
-  <link rel="stylesheet" href="css/slide-3.css">
-  <link rel="stylesheet" href="css/slide-4.css">
-  <link rel="stylesheet" href="css/slide-5.css">
+  <link rel="stylesheet" href="css/base.css?v=2">
+  <link rel="stylesheet" href="css/slide-1.css?v=2">
+  <link rel="stylesheet" href="css/slide-2.css?v=2">
+  <link rel="stylesheet" href="css/slide-3.css?v=2">
+  <link rel="stylesheet" href="css/slide-4.css?v=2">
+  <link rel="stylesheet" href="css/slide-5.css?v=2">
+  <link rel="stylesheet" href="css/slide-6.css?v=2">
 </head>
 <body>
+  <!-- 오프닝 커튼 — 스페이스바를 누르면 걷히며 발표가 시작된다 -->
+  <div id="curtain"></div>
+
   <main id="deck">
 
     <!-- ============ 슬라이드 1 — 인트로 ============ -->
@@ -280,15 +284,45 @@
       </div>
     </section>
 
+    <!-- ============ 슬라이드 6 — SWOT 분석 ============ -->
+    <section class="slide" id="slide-6">
+      <div class="bg">
+        <div class="bg-spot"></div>
+        <div class="particles" id="s6-particles"></div>
+        <div class="bg-vignette"></div>
+      </div>
+
+      <div class="stage">
+        <div class="eyebrow" id="s6-eyebrow">SWOT 분석</div>
+
+        <!-- 2×2 매트릭스 — 프레임·십자선·노드는 사분면 위에 그려진다.
+             사분면 콘텐츠(S·W·O·T)는 js/slide-6.js의 QUADS 배열로 채운다. -->
+        <div class="swot" id="s6-swot">
+          <span class="swot-frame" aria-hidden="true"></span>
+          <span class="div-h" aria-hidden="true"></span>
+          <span class="div-v" aria-hidden="true"></span>
+          <span class="node" aria-hidden="true"></span>
+
+          <article class="quad" data-tone="pos" data-q="0"></article>
+          <article class="quad" data-tone="neg" data-q="1"></article>
+          <article class="quad" data-tone="pos" data-q="2"></article>
+          <article class="quad" data-tone="neg" data-q="3"></article>
+        </div>
+
+        <div class="kicker" id="s6-kicker">분석을 넘어 <em class="kw">전략</em>으로</div>
+      </div>
+    </section>
+
   </main>
 
   <!-- 라이브러리 · 스크립트 (로컬 · 오프라인) -->
   <script src="vendor/gsap.min.js"></script>
-  <script src="js/slide-1.js"></script>
-  <script src="js/slide-2.js"></script>
-  <script src="js/slide-3.js"></script>
-  <script src="js/slide-4.js"></script>
-  <script src="js/slide-5.js"></script>
-  <script src="js/main.js"></script>
+  <script src="js/slide-1.js?v=2"></script>
+  <script src="js/slide-2.js?v=2"></script>
+  <script src="js/slide-3.js?v=2"></script>
+  <script src="js/slide-4.js?v=2"></script>
+  <script src="js/slide-5.js?v=2"></script>
+  <script src="js/slide-6.js?v=2"></script>
+  <script src="js/main.js?v=2"></script>
 </body>
 </html>

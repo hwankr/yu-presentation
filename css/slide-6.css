@@ -1,0 +1,253 @@
+/* ============================================================
+   slide-6.css — 슬라이드 6 (SWOT 분석)
+   2×2 매트릭스. 강점·기회(긍정)는 솔리드, 약점·위협(부정)은
+   윤곽선 — 색이 아닌 형태 대비로 사분면을 구분한다.
+   ============================================================ */
+
+#slide-6 { background: var(--bg); }
+
+/* ----- 배경 (슬라이드 1~5 톤 재사용) ----- */
+#slide-6 .bg { position: absolute; inset: 0; z-index: 0; }
+
+#slide-6 .bg-spot {
+  position: absolute; left: 50%; top: 50%;
+  width: 1300px; height: 1300px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 64%);
+}
+
+#slide-6 .bg-vignette {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at 50% 50%, transparent 30%, rgba(0,0,0,0.68) 100%);
+}
+
+#slide-6 .particles { position: absolute; inset: 0; }
+#slide-6 .particle {
+  position: absolute; width: 3px; height: 3px;
+  border-radius: 50%; background: #fff;
+}
+
+/* ----- 무대 ----- */
+#slide-6 .stage { position: relative; z-index: 2; height: 100%; }
+
+/* ----- 상단 eyebrow ----- */
+#slide-6 .eyebrow {
+  position: absolute; left: 50%; top: 4%;
+  transform: translateX(-50%);
+  font-family: 'Pretendard', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.34em;
+  color: rgba(244, 244, 242, 0.5);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   SWOT 매트릭스 — 2×2 그리드
+   ============================================================ */
+#slide-6 .swot {
+  position: absolute; left: 50%; top: 49.5%;
+  transform: translate(-50%, -50%);
+  width: min(1180px, 92vw);
+  height: min(80vh, 680px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+}
+
+/* 외곽 프레임 · 십자 분할선 · 중심 노드 — 애니메이션 대상, 사분면 위에 그려진다 */
+#slide-6 .swot-frame {
+  position: absolute; inset: 0;
+  z-index: 3;
+  border: 1px solid rgba(244, 244, 242, 0.16);
+  pointer-events: none;
+}
+#slide-6 .div-h {
+  position: absolute; left: 0; right: 0; top: 50%;
+  z-index: 3;
+  height: 1px;
+  background: rgba(244, 244, 242, 0.16);
+  transform: scaleX(0);
+  transform-origin: 50% 50%;
+  pointer-events: none;
+}
+#slide-6 .div-v {
+  position: absolute; top: 0; bottom: 0; left: 50%;
+  z-index: 3;
+  width: 1px;
+  background: rgba(244, 244, 242, 0.16);
+  transform: scaleY(0);
+  transform-origin: 50% 50%;
+  pointer-events: none;
+}
+#slide-6 .node {
+  position: absolute; left: 50%; top: 50%;
+  z-index: 4;
+  width: 7px; height: 7px;
+  background: var(--text);
+  transform: translate(-50%, -50%) rotate(45deg) scale(0);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+}
+
+/* ----- 사분면 카드 ----- */
+#slide-6 .quad {
+  position: relative;
+  overflow: hidden;
+  padding: clamp(1.3rem, 3.6vh, 2.4rem) clamp(1.5rem, 3vw, 2.4rem);
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  box-shadow: 0 0 0 0 rgba(244, 244, 242, 0);   /* 클릭 시 테두리 링으로 트윈 */
+  will-change: transform, opacity;
+}
+
+/* 큰 고스트 글자 (S/W/O/T) — 카드 우하단, 일부 잘림 */
+#slide-6 .ghost {
+  position: absolute;
+  right: -0.05em; bottom: -0.24em;
+  z-index: 1;
+  font-family: 'Fraunces', serif;
+  font-size: clamp(7rem, 15vw, 13rem);
+  font-weight: 600;
+  line-height: 1;
+  user-select: none;
+  pointer-events: none;
+  will-change: transform;
+}
+#slide-6 .quad[data-tone="pos"] .ghost {
+  color: rgba(244, 244, 242, 0.15);
+}
+#slide-6 .quad[data-tone="neg"] .ghost {
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(244, 244, 242, 0.22);
+}
+
+/* ----- 사분면 헤더 — 배지 + 라벨 ----- */
+#slide-6 .quad-head {
+  position: relative; z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.72rem;
+}
+#slide-6 .badge {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.8rem; height: 2.8rem;
+  font-family: 'Fraunces', serif;
+  font-size: 1.58rem;
+  font-weight: 600;
+  line-height: 1;
+  will-change: transform, opacity;
+}
+/* 긍정 — 솔리드 배지 / 부정 — 윤곽선 배지 (형태 대비) */
+#slide-6 .quad[data-tone="pos"] .badge {
+  background: var(--text);
+  color: var(--bg);
+}
+#slide-6 .quad[data-tone="neg"] .badge {
+  border: 1px solid rgba(244, 244, 242, 0.55);
+  color: var(--text);
+}
+
+#slide-6 .quad-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+#slide-6 .quad-ko {
+  font-family: 'Pretendard', sans-serif;
+  font-size: 1.22rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  color: var(--text);
+}
+#slide-6 .quad-en {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(244, 244, 242, 0.42);
+}
+
+/* ----- 항목 리스트 ----- */
+#slide-6 .items {
+  position: relative; z-index: 2;
+  list-style: none;
+  margin-top: clamp(1rem, 2.6vh, 1.6rem);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.6rem, 1.7vh, 1rem);
+}
+#slide-6 .item {
+  position: relative;
+  padding-left: 0.95rem;
+  will-change: transform, opacity;
+}
+/* 항목 마커 — 긍정은 채움, 부정은 윤곽선 (형태 대비) */
+#slide-6 .item::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0.4em;
+  width: 6px; height: 6px;
+}
+#slide-6 .quad[data-tone="pos"] .item::before {
+  background: rgba(244, 244, 242, 0.78);
+}
+#slide-6 .quad[data-tone="neg"] .item::before {
+  border: 1px solid rgba(244, 244, 242, 0.5);
+}
+#slide-6 .item-lead {
+  display: block;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+  line-height: 1.3;
+  color: var(--text);
+}
+#slide-6 .item-sub {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.84rem;
+  font-weight: 400;
+  letter-spacing: 0.005em;
+  line-height: 1.4;
+  color: rgba(244, 244, 242, 0.46);
+}
+
+/* ----- 하단 킥커 ----- */
+#slide-6 .kicker {
+  position: absolute; left: 50%; bottom: 4%;
+  transform: translateX(-50%);
+  font-family: 'Pretendard', sans-serif;
+  font-size: clamp(1.05rem, 2.1vw, 1.45rem);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--dim);
+  white-space: nowrap;
+}
+#slide-6 .kicker .kw {
+  font-style: normal;
+  font-weight: 800;
+  color: var(--text);
+}
+
+/* ============================================================
+   세로 화면 (포트레이트) — 매트릭스 축소
+   ============================================================ */
+@media (max-aspect-ratio: 1 / 1) {
+  #slide-6 .swot { width: 94vw; height: 78vh; }
+  #slide-6 .quad { padding: 1.15rem 1.15rem; }
+  #slide-6 .ghost { font-size: 22vw; }
+  #slide-6 .badge { width: 2.05rem; height: 2.05rem; font-size: 1.18rem; }
+  #slide-6 .quad-ko { font-size: 1rem; }
+  #slide-6 .quad-en { font-size: 0.55rem; letter-spacing: 0.16em; }
+  #slide-6 .items { margin-top: 0.7rem; gap: 0.4rem; }
+  #slide-6 .item-lead { font-size: 0.84rem; }
+  #slide-6 .item-sub { font-size: 0.7rem; }
+  #slide-6 .eyebrow { top: 5%; }
+  #slide-6 .kicker { bottom: 4.5%; font-size: 1.05rem; }
+}
